@@ -151,7 +151,20 @@ Verification actually run: `tsc -b` clean, `npm run build` succeeds,
 20260726140000_10_lead_nexi.sql               lead_nexi 1:1 (§10, 12 tri-state fields)
 20260726140100_04b_anagrafica_extra.sql        lead.email, lead.sito_web, sedi.nome
 20260726150000_12_offerte.sql                 offerte (per brand) + lead.offerta_consigliata_id
+20260726160000_11_import_dedup.sql            lead_simili() pg_trgm fuzzy dedup RPC
 ```
+
+### Milestone 7 — DONE (2026-07-26)
+
+SheetJS (`xlsx` 0.18.5) added. `features/import`: Excel importer (`excel.ts` pure
+mapping to the REAL column headers of `lista crm_esiti`, tested; `leggiXlsx` via
+SheetJS) with P.IVA exact dedup + `lead_simili` fuzzy fallback for rows without
+P.IVA, preview + per-duplicate merge choice (integra/sovrascrivi/lascia, §8).
+Call-center mail parser (`mail.ts`, built BLIND from §8 — label synonyms + P.IVA/
+CAP fallbacks, tested; **needs tuning against a real email**). `/importa` route,
+"Importa" nav. Verified: real 157-row file parses clean (all valid P.IVA/CAP);
+fuzzy RPC returns 0.71 match via JWT. Imports never touch existing
+lavorazioni/appuntamenti/contatti (§8). 48 tests.
 
 ### Milestone 4 — DONE (2026-07-26)
 

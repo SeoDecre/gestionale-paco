@@ -969,6 +969,15 @@ export type Database = {
     }
     Functions: {
       applica_rls_owner: { Args: { p_tabella: string }; Returns: undefined }
+      lead_simili: {
+        Args: { p_cap?: string; p_nome: string; p_soglia?: number }
+        Returns: {
+          cap: string
+          id: string
+          ragione_sociale: string
+          similarita: number
+        }[]
+      }
       param_int: {
         Args: { p_chiave: string; p_default: number }
         Returns: number

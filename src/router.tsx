@@ -7,6 +7,7 @@ import { LeadListPage } from '@/features/lead/LeadListPage'
 import { LeadDetailPage } from '@/features/lead/LeadDetailPage'
 import { AgendaPage } from '@/features/planning/AgendaPage'
 import { ConfigurazionePage } from '@/features/configurazione/ConfigurazionePage'
+import { ImportPage } from '@/features/import/ImportPage'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -23,6 +24,7 @@ export const router = createBrowserRouter([
       { path: 'lead', element: <LeadListPage /> },
       { path: 'lead/:id', element: <LeadDetailPage /> },
       { path: 'configurazione', element: <ConfigurazionePage /> },
+      { path: 'importa', element: <ImportPage /> },
     ],
   },
 ])

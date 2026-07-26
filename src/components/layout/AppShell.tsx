@@ -5,6 +5,7 @@ const voci = [
   { to: '/', etichetta: 'Oggi', end: true },
   { to: '/agenda', etichetta: 'Agenda', end: false },
   { to: '/lead', etichetta: 'Lead', end: false },
+  { to: '/importa', etichetta: 'Importa', end: false },
   { to: '/configurazione', etichetta: 'Config', end: false },
 ]
 
