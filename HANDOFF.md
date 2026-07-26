@@ -152,7 +152,17 @@ Verification actually run: `tsc -b` clean, `npm run build` succeeds,
 20260726140100_04b_anagrafica_extra.sql        lead.email, lead.sito_web, sedi.nome
 20260726150000_12_offerte.sql                 offerte (per brand) + lead.offerta_consigliata_id
 20260726160000_11_import_dedup.sql            lead_simili() pg_trgm fuzzy dedup RPC
+20260726170000_13_liste_salvate.sql           liste_salvate (filtri + colonne export)
 ```
+
+### Milestone 8 — DONE (2026-07-26)
+
+`features/report`: `/report` page. §12 analytics (`aggregazioni.ts` pure + tested:
+funnel per brand, efficacia per fonte, conversione per zona, concorrenti per
+zona). §13 combinable filters (zona/target/brand/stato/fonte/concorrente, client-
+side), Excel export (SheetJS `export.ts`) with a column picker, and saved lists
+(migration 13, `liste_salvate`, upsert by name — filtri+colonne reusable).
+52 tests. Verified via API (saved-list upsert, report embed).
 
 ### Milestone 7 — DONE (2026-07-26)
 

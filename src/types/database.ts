@@ -616,6 +616,36 @@ export type Database = {
           },
         ]
       }
+      liste_salvate: {
+        Row: {
+          colonne_export: Json | null
+          created_at: string
+          filtri: Json
+          id: string
+          nome: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          colonne_export?: Json | null
+          created_at?: string
+          filtri?: Json
+          id?: string
+          nome: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          colonne_export?: Json | null
+          created_at?: string
+          filtri?: Json
+          id?: string
+          nome?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       offerte: {
         Row: {
           brand: Database["public"]["Enums"]["brand"]
