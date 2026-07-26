@@ -61,7 +61,7 @@ function SchedaSede({ leadId, sede }: { leadId: string; sede: SedeConPos }) {
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-campo font-medium">
-            Sede {sede.slot}
+            {sede.nome ?? `Sede ${sede.slot}`}
             {sede.etichette_sede && (
               <span className="text-testo-debole"> · {sede.etichette_sede.nome}</span>
             )}
@@ -122,6 +122,7 @@ function RigaPos({ leadId, pos }: { leadId: string; pos: PosConTipo }) {
 function FormSede({ leadId, onFatto }: { leadId: string; onFatto: () => void }) {
   const crea = useCreaSede(leadId)
   const etichette = useEtichetteSede()
+  const [nome, setNome] = useState('')
   const [etichettaId, setEtichettaId] = useState('')
   const [indirizzo, setIndirizzo] = useState('')
   const [civico, setCivico] = useState('')
@@ -133,6 +134,7 @@ function FormSede({ leadId, onFatto }: { leadId: string; onFatto: () => void }) 
     e.preventDefault()
     await crea.mutateAsync({
       lead_id: leadId,
+      nome: nome.trim() || null,
       etichetta_id: etichettaId || null,
       indirizzo: indirizzo.trim() || null,
       civico: civico.trim() || null,
@@ -145,6 +147,11 @@ function FormSede({ leadId, onFatto }: { leadId: string; onFatto: () => void }) 
 
   return (
     <form onSubmit={onSubmit} className="mb-3 flex flex-col gap-2 rounded-card bg-sfondo p-3">
+      <Input
+        placeholder="Nome sede (come su scontrino POS)"
+        value={nome}
+        onChange={(e) => setNome(e.target.value)}
+      />
       <Select value={etichettaId} onChange={(e) => setEtichettaId(e.target.value)}>
         <option value="">— etichetta —</option>
         {(etichette.data ?? []).map((et) => (

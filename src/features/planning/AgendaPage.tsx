@@ -8,18 +8,13 @@ import { formattaData, formattaOra } from '@/lib/format'
 import { urlPercorso, indirizzoCompleto } from '@/lib/maps'
 import { useAppuntamentiGiorno, useAnnullaAppuntamento, useSegnaFatto } from './queries'
 import { giornoISO, spostaGiorno } from './giorni'
-import { slotLiberi, occupatiDaAppuntamenti, minutiInOra } from './slot'
 import type { AppuntamentoConLead } from './api'
-
-const DURATA_SUGGERIMENTI = 60
 
 export function AgendaPage() {
   const [giorno, setGiorno] = useState(giornoISO())
   const appuntamenti = useAppuntamentiGiorno(giorno)
 
   const attivi = (appuntamenti.data ?? []).filter((a) => a.stato !== 'annullato')
-  const occupati = occupatiDaAppuntamenti(attivi)
-  const liberi = slotLiberi(DURATA_SUGGERIMENTI, occupati)
   const percorso = urlPercorso(attivi.map((a) => a.lead ?? {}))
   const dataLabel = formattaData(new Date(`${giorno}T00:00:00`))
 
@@ -62,20 +57,6 @@ export function AgendaPage() {
             <RigaAgenda key={a.id} app={a} />
           ))}
         </ul>
-      </Scheda>
-
-      <Scheda titolo={`Slot liberi (${DURATA_SUGGERIMENTI} min, fasce preferite)`}>
-        {liberi.length === 0 ? (
-          <p className="text-testo-debole">Nessuno slot libero nelle fasce preferite.</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {liberi.map((m) => (
-              <Pillola key={m} tinta="info">
-                {minutiInOra(m)}
-              </Pillola>
-            ))}
-          </div>
-        )}
       </Scheda>
     </div>
   )

@@ -4,7 +4,7 @@ import { Pillola } from '@/components/ui/Pillola'
 import { BannerModifiche } from '@/components/ui/BannerModifiche'
 import { Errore } from '@/components/ui/Stato'
 import { useBozza } from '@/lib/useBozza'
-import { pivaValida, capValido, provinciaValida } from '@/lib/validazione'
+import { pivaValida, capValido, provinciaValida, emailValida } from '@/lib/validazione'
 import type { Enum, Riga } from '@/types/db'
 import type { LeadConBrand } from '../api'
 import { useAggiornaLead } from '../queries'
@@ -14,6 +14,8 @@ import { suggerisciTarget } from '../target'
 type CampiAnagrafica = Pick<
   Riga<'lead'>,
   | 'ragione_sociale'
+  | 'email'
+  | 'sito_web'
   | 'piva'
   | 'codice_fiscale'
   | 'indirizzo'
@@ -37,6 +39,8 @@ export function AnagraficaScheda({ lead }: { lead: LeadConBrand }) {
 
   const { bozza, imposta, annulla, modificato } = useBozza<CampiAnagrafica>({
     ragione_sociale: lead.ragione_sociale,
+    email: lead.email,
+    sito_web: lead.sito_web,
     piva: lead.piva,
     codice_fiscale: lead.codice_fiscale,
     indirizzo: lead.indirizzo,
@@ -54,7 +58,9 @@ export function AnagraficaScheda({ lead }: { lead: LeadConBrand }) {
   const erroriPiva = pivaValida(bozza.piva) ? null : 'Deve essere di 11 cifre.'
   const erroriCap = capValido(bozza.cap) ? null : '5 cifre.'
   const erroriProv = provinciaValida(bozza.provincia) ? null : '2 lettere (es. NA).'
-  const valido = !erroriPiva && !erroriCap && !erroriProv && bozza.ragione_sociale.trim() !== ''
+  const erroriEmail = emailValida(bozza.email) ? null : 'Email non valida.'
+  const valido =
+    !erroriPiva && !erroriCap && !erroriProv && !erroriEmail && bozza.ragione_sociale.trim() !== ''
 
   const suggerito = suggerisciTarget(bozza.fatturato_mensile, bande.data ?? [])
 
@@ -72,6 +78,26 @@ export function AnagraficaScheda({ lead }: { lead: LeadConBrand }) {
               id={id}
               value={bozza.ragione_sociale}
               onChange={(e) => imposta('ragione_sociale', e.target.value)}
+            />
+          )}
+        </Campo>
+
+        <Campo etichetta="Email" errore={erroriEmail}>
+          {(id) => (
+            <Input
+              id={id}
+              type="email"
+              value={bozza.email ?? ''}
+              onChange={(e) => imposta('email', e.target.value || null)}
+            />
+          )}
+        </Campo>
+        <Campo etichetta="Sito web">
+          {(id) => (
+            <Input
+              id={id}
+              value={bozza.sito_web ?? ''}
+              onChange={(e) => imposta('sito_web', e.target.value || null)}
             />
           )}
         </Campo>

@@ -8,6 +8,7 @@ import { PannelloSedi } from './components/PannelloSedi'
 import { PannelloConcorrenti } from './components/PannelloConcorrenti'
 import { PannelloAllegati } from './components/PannelloAllegati'
 import { PannelloLavorazioni } from '@/features/lavorazioni/PannelloLavorazioni'
+import { PannelloNexi } from '@/features/nexi/PannelloNexi'
 
 export function LeadDetailPage() {
   const { id = '' } = useParams()
@@ -34,10 +35,15 @@ export function LeadDetailPage() {
         <>
           <TestataLead lead={lead.data} />
           <AnagraficaScheda lead={lead.data} />
-          <PannelloLavorazioni leadId={id} brandIniziale={lead.data.lead_brand[0]?.brand} />
+          <PannelloLavorazioni
+            leadId={id}
+            brandIniziale={lead.data.lead_brand[0]?.brand}
+            leadZonaId={lead.data.zona_id}
+          />
           <PannelloContatti leadId={id} />
           <PannelloSedi leadId={id} />
           <PannelloConcorrenti leadId={id} />
+          {lead.data.lead_brand.some((b) => b.brand === 'NEXI') && <PannelloNexi leadId={id} />}
           <PannelloAllegati leadId={id} />
 
           <button

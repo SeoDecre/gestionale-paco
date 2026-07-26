@@ -1,16 +1,15 @@
 import { describe, it, expect } from 'vitest'
 import {
   sovrappongono,
-  slotLiberi,
+  fuoriFasceEscluse,
+  suggerisciSlot,
   zonaComoda,
   minutiInOra,
-  FASCE_DEFAULT,
   type IntervalloMin,
 } from './slot'
 
 describe('sovrappongono (half-open)', () => {
   it('back-to-back non si sovrappongono', () => {
-    // 10–11 e 11–12
     expect(sovrappongono(600, 660, 660, 720)).toBe(false)
   })
   it('intersezione reale', () => {
@@ -21,38 +20,49 @@ describe('sovrappongono (half-open)', () => {
   })
 })
 
-describe('slotLiberi', () => {
-  it('resta dentro le fasce preferite', () => {
-    const slot = slotLiberi(60, [], FASCE_DEFAULT, 30)
-    // Nessuno slot inizia fuori da: [0,600) [780,870) [1200,1440)
-    for (const s of slot) {
-      const dentro =
-        (s >= 0 && s + 60 <= 600) ||
-        (s >= 780 && s + 60 <= 870) ||
-        (s >= 1200 && s + 60 <= 1440)
-      expect(dentro).toBe(true)
-    }
-    // Fascia 13:00–14:30 (90 min), slot 60 passo 30: 13:00 e 13:30 stanno,
-    // 14:00 no (finirebbe alle 15:00).
-    expect(slot).toContain(780) // 13:00
-    expect(slot).toContain(810) // 13:30 -> 14:30, entra
-    expect(slot).not.toContain(840) // 14:00 -> 15:00, esce
+describe('fuoriFasceEscluse (§6)', () => {
+  it('slot 11:00–12:00 è fuori dalle fasce escluse', () => {
+    expect(fuoriFasceEscluse(660, 720)).toBe(true)
+  })
+  it('slot 09:00–10:00 tocca la fascia "prima delle 10" -> escluso', () => {
+    expect(fuoriFasceEscluse(540, 600)).toBe(false)
+  })
+  it('slot 13:30–14:30 dentro la pausa pranzo -> escluso', () => {
+    expect(fuoriFasceEscluse(810, 870)).toBe(false)
+  })
+  it('slot 20:00–21:00 dopo le 20 -> escluso', () => {
+    expect(fuoriFasceEscluse(1200, 1260)).toBe(false)
+  })
+})
+
+describe('suggerisciSlot (§6: prima e dopo un appuntamento in zona comoda)', () => {
+  it('propone lo slot subito prima e subito dopo', () => {
+    // appuntamento comodo 11:00–12:00; durata 60
+    const comodi: IntervalloMin[] = [{ inizio: 660, fine: 720 }]
+    const slot = suggerisciSlot(60, comodi, comodi)
+    expect(slot).toContain(600) // 10:00 subito prima (10–11, fuori fasce escluse)
+    expect(slot).toContain(720) // 12:00 subito dopo (12–13, ok)
   })
 
-  it('esclude gli slot che intersecano gli occupati', () => {
-    const occupati: IntervalloMin[] = [{ inizio: 540, fine: 600 }] // 09:00–10:00
-    const slot = slotLiberi(60, occupati, [{ daMin: 480, aMin: 660 }], 30)
-    // 08:00 ok (08–09), 08:30 interseca (08:30–09:30 vs 09:00–10:00) -> escluso,
-    // 09:00 interseca, 09:30 interseca, 10:00 ok (10–11)
-    expect(slot).toContain(480)
-    expect(slot).toContain(600)
-    expect(slot).not.toContain(510)
-    expect(slot).not.toContain(540)
+  it('scarta i candidati dentro una fascia esclusa', () => {
+    // appuntamento 10:00–11:00: "prima" = 09:00 (escluso), "dopo" = 11:00 (ok)
+    const comodi: IntervalloMin[] = [{ inizio: 600, fine: 660 }]
+    const slot = suggerisciSlot(60, comodi, comodi)
+    expect(slot).not.toContain(540) // 09:00 nella fascia esclusa
+    expect(slot).toContain(660) // 11:00 ok
   })
 
-  it('nessuno slot se la durata non entra nella fascia', () => {
-    const slot = slotLiberi(120, [], [{ daMin: 780, aMin: 870 }], 15) // fascia 90 min
-    expect(slot).toEqual([])
+  it('scarta i candidati che si sovrappongono ad altri appuntamenti', () => {
+    // comodo 11:00–12:00; ma 12:00–13:00 già occupato -> "dopo" salta
+    const comodo: IntervalloMin = { inizio: 660, fine: 720 }
+    const occupati: IntervalloMin[] = [comodo, { inizio: 720, fine: 780 }]
+    const slot = suggerisciSlot(60, [comodo], occupati)
+    expect(slot).toContain(600) // 10:00 prima, libero
+    expect(slot).not.toContain(720) // 12:00 dopo, occupato
+  })
+
+  it('nessun appuntamento comodo -> nessun suggerimento', () => {
+    expect(suggerisciSlot(60, [], [{ inizio: 660, fine: 720 }])).toEqual([])
   })
 })
 

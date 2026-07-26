@@ -12,9 +12,11 @@ import { FormRegistraLavorazione } from './FormRegistraLavorazione'
 export function PannelloLavorazioni({
   leadId,
   brandIniziale,
+  leadZonaId,
 }: {
   leadId: string
   brandIniziale?: Enum<'brand'>
+  leadZonaId?: string | null
 }) {
   const lavorazioni = useLavorazioni(leadId)
   const [registra, setRegistra] = useState(false)
@@ -34,6 +36,7 @@ export function PannelloLavorazioni({
           <FormRegistraLavorazione
             leadId={leadId}
             brandIniziale={brandIniziale}
+            leadZonaId={leadZonaId}
             onFatto={() => setRegistra(false)}
           />
         </div>

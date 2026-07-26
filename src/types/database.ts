@@ -397,6 +397,7 @@ export type Database = {
           codice_fiscale: string | null
           comune: string | null
           created_at: string
+          email: string | null
           fatturato_mensile: number | null
           fonte: Database["public"]["Enums"]["fonte_lead"]
           id: string
@@ -406,6 +407,7 @@ export type Database = {
           piva: string | null
           provincia: string | null
           ragione_sociale: string
+          sito_web: string | null
           target: Database["public"]["Enums"]["target_lettera"] | null
           updated_at: string
           zona_id: string | null
@@ -417,6 +419,7 @@ export type Database = {
           codice_fiscale?: string | null
           comune?: string | null
           created_at?: string
+          email?: string | null
           fatturato_mensile?: number | null
           fonte?: Database["public"]["Enums"]["fonte_lead"]
           id?: string
@@ -426,6 +429,7 @@ export type Database = {
           piva?: string | null
           provincia?: string | null
           ragione_sociale: string
+          sito_web?: string | null
           target?: Database["public"]["Enums"]["target_lettera"] | null
           updated_at?: string
           zona_id?: string | null
@@ -437,6 +441,7 @@ export type Database = {
           codice_fiscale?: string | null
           comune?: string | null
           created_at?: string
+          email?: string | null
           fatturato_mensile?: number | null
           fonte?: Database["public"]["Enums"]["fonte_lead"]
           id?: string
@@ -446,6 +451,7 @@ export type Database = {
           piva?: string | null
           provincia?: string | null
           ragione_sociale?: string
+          sito_web?: string | null
           target?: Database["public"]["Enums"]["target_lettera"] | null
           updated_at?: string
           zona_id?: string | null
@@ -530,6 +536,71 @@ export type Database = {
             foreignKeyName: "lead_concorrenti_lead_id_fkey"
             columns: ["lead_id"]
             isOneToOne: false
+            referencedRelation: "lead"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_nexi: {
+        Row: {
+          amex_attivare: boolean | null
+          amex_attivo: boolean | null
+          amex_continuare: boolean | null
+          canone_attuale: number | null
+          commissioni_attuali: string | null
+          created_at: string
+          dcc_attivo: boolean | null
+          extra_ue_valuta_estera: boolean | null
+          lead_id: string
+          ordini_telefonici: boolean | null
+          owner_id: string
+          rateale_interessato: boolean | null
+          transazioni_fuori_sede: boolean | null
+          transazioni_sotto_30: boolean | null
+          updated_at: string
+          vende_online: boolean | null
+        }
+        Insert: {
+          amex_attivare?: boolean | null
+          amex_attivo?: boolean | null
+          amex_continuare?: boolean | null
+          canone_attuale?: number | null
+          commissioni_attuali?: string | null
+          created_at?: string
+          dcc_attivo?: boolean | null
+          extra_ue_valuta_estera?: boolean | null
+          lead_id: string
+          ordini_telefonici?: boolean | null
+          owner_id: string
+          rateale_interessato?: boolean | null
+          transazioni_fuori_sede?: boolean | null
+          transazioni_sotto_30?: boolean | null
+          updated_at?: string
+          vende_online?: boolean | null
+        }
+        Update: {
+          amex_attivare?: boolean | null
+          amex_attivo?: boolean | null
+          amex_continuare?: boolean | null
+          canone_attuale?: number | null
+          commissioni_attuali?: string | null
+          created_at?: string
+          dcc_attivo?: boolean | null
+          extra_ue_valuta_estera?: boolean | null
+          lead_id?: string
+          ordini_telefonici?: boolean | null
+          owner_id?: string
+          rateale_interessato?: boolean | null
+          transazioni_fuori_sede?: boolean | null
+          transazioni_sotto_30?: boolean | null
+          updated_at?: string
+          vende_online?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_nexi_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: true
             referencedRelation: "lead"
             referencedColumns: ["id"]
           },
@@ -626,6 +697,7 @@ export type Database = {
           id: string
           indirizzo: string | null
           lead_id: string
+          nome: string | null
           note: string | null
           owner_id: string
           provincia: string | null
@@ -641,6 +713,7 @@ export type Database = {
           id?: string
           indirizzo?: string | null
           lead_id: string
+          nome?: string | null
           note?: string | null
           owner_id: string
           provincia?: string | null
@@ -656,6 +729,7 @@ export type Database = {
           id?: string
           indirizzo?: string | null
           lead_id?: string
+          nome?: string | null
           note?: string | null
           owner_id?: string
           provincia?: string | null

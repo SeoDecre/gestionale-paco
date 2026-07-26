@@ -6,6 +6,8 @@ import type { Enum } from '@/types/db'
 import { useEsiti, useAzioniSuccessive } from '@/features/vocabolari/queries'
 import { useContatti } from '@/features/lead/queries'
 import { TUTTI_I_BRAND, BADGE_BRAND } from '@/features/lead/brand'
+import { useSlotSuggeriti } from '@/features/planning/queries'
+import { formattaData } from '@/lib/format'
 import { useRegistraLavorazione } from './queries'
 
 /**
@@ -16,10 +18,12 @@ import { useRegistraLavorazione } from './queries'
 export function FormRegistraLavorazione({
   leadId,
   brandIniziale,
+  leadZonaId,
   onFatto,
 }: {
   leadId: string
   brandIniziale?: Enum<'brand'>
+  leadZonaId?: string | null
   onFatto: () => void
 }) {
   const registra = useRegistraLavorazione(leadId)
@@ -38,6 +42,8 @@ export function FormRegistraLavorazione({
   const [quando, setQuando] = useState('')
   const [durata, setDurata] = useState('60')
   const [luogo, setLuogo] = useState('')
+
+  const { suggerimenti } = useSlotSuggeriti(leadZonaId, Number(durata) || 60)
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -134,6 +140,37 @@ export function FormRegistraLavorazione({
         <input type="checkbox" checked={conApp} onChange={(e) => setConApp(e.target.checked)} />
         Fissa un appuntamento
       </label>
+
+      {conApp && suggerimenti.length > 0 && (
+        <div className="rounded-card border border-info-soft-border bg-info-soft p-2">
+          <p className="mb-1 text-etichetta text-info-soft-text">
+            Slot suggeriti (zona comoda, §6)
+          </p>
+          <div className="flex flex-col gap-1">
+            {suggerimenti.map((g) => (
+              <div key={g.giorno} className="flex flex-wrap items-center gap-1.5">
+                <span className="text-etichetta text-testo-debole">
+                  {formattaData(new Date(`${g.giorno}T00:00:00`))}
+                </span>
+                {g.slot.map((s) => (
+                  <button
+                    key={s.value}
+                    type="button"
+                    onClick={() => setQuando(s.value)}
+                    className={
+                      quando === s.value
+                        ? 'rounded-pillola bg-info-soft-text px-3 py-1 text-etichetta text-white'
+                        : 'rounded-pillola border border-info-soft-border bg-superficie px-3 py-1 text-etichetta text-info-soft-text'
+                    }
+                  >
+                    {s.ora}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {conApp && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

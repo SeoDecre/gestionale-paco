@@ -148,6 +148,8 @@ Verification actually run: `tsc -b` clean, `npm run build` succeeds,
                                               EXCLUDE gist no-overlap (23P01)
 20260726130200_08_stato_derivato.sql           ricalcola_stato_lead() + triggers
                                               on lavorazioni & esiti flag changes
+20260726140000_10_lead_nexi.sql               lead_nexi 1:1 (§10, 12 tri-state fields)
+20260726140100_04b_anagrafica_extra.sql        lead.email, lead.sito_web, sedi.nome
 ```
 
 ### Milestone 2 — DONE and verified (2026-07-26)
@@ -188,11 +190,38 @@ comoda logic — tested, `giorni.ts` day-range helpers), real `features/dashboar
 (§3 tiles + today's appts + route map link). New routes `/agenda`; nav updated.
 Shared `src/lib/sessione.ts` (`ownerId()`) extracted and reused.
 
-**Next (Milestone 4 — Configurazione):** vocab editors (7 tables, write side),
-parametri_target editor, zone + zone_cap mapping UI, offerte CRUD (+ add
-`lead.offerta_consigliata_id` then). All read paths already exist in
-`features/vocabolari`. **Milestone 5 (NEXI §10) needs the missing spec** — the 12
-typed fields are guesswork without it.
+### Spec recovered + Milestone 5 — DONE (2026-07-26)
+
+The authoritative spec `AgentPro_Specifica_Sessionex sergio.md` is back in the
+repo. Reconciled M2/M3 against it:
+- **Planning bug FIXED (§6):** the excluded bands (before 10:00 / 13:00–14:30 /
+  after 20:00) were inverted — they're now correctly excluded, and slot
+  suggestions use the real "before & after an appointment in a **zona comoda**"
+  algorithm (`slot.ts` `suggerisciSlot`, `suggerimenti.ts` `calcolaSuggerimenti`,
+  wired into Registra lavorazione). 33 tests.
+- **§4 gaps filled:** `lead.email`, `lead.sito_web`, `sedi.nome` added (04b) and
+  surfaced in the forms.
+- **M5 (NEXI §10) built:** `lead_nexi` 1:1 table, `features/nexi` (tri-state
+  `TriStato` toggles, conditional Amex/DCC fields, unsaved banner), shown on the
+  lead only when brands include NEXI. Verified via API (tri-state true/false/null
+  round-trips).
+
+### Still TODO (reconciliation polish, not yet built)
+- Contatto **green phone button** → tel: + auto-lavorazione "Chiamato X il … alle …"
+  (`testoChiamataAutomatica` helper already exists in lib/format.ts).
+- **"POS dichiarati (a voce) / censiti"** counter (§4/§5): compare
+  `lavorazioni.pos_richiesti` vs `sedi_pos` count.
+- Dashboard completeness (§3): **Lead totali** tile, **per-fonte** tiles, quick
+  search, "accessi rapidi"; tiles clickable → filtered lead list.
+- §4 "Verifica dati online" Google/Facebook buttons; P.IVA Google-search button.
+
+### Next milestones
+- **M4 (Configurazione)** — vocab editors (write side; read paths exist in
+  `features/vocabolari`), parametri_target editor, zone + zone_cap UI, offerte CRUD
+  (+ add `lead.offerta_consigliata_id` then). Fully unblocked.
+- **M7 (Imports)** — Excel `lista crm_esiti luglio 2026.xlsx` is now in the repo.
+  Still needs a sample call-center email for the second parser.
+- **M8 (Report/Export)**; **M6 (Push/PWA)** still blocked on a live HTTPS domain.
 
 ### Dev project — LIVE and verified (2026-07-26)
 

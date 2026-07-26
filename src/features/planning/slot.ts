@@ -12,8 +12,11 @@ import { FUSO } from '@/lib/format'
 export type FasciaOraria = { daMin: number; aMin: number }
 export type IntervalloMin = { inizio: number; fine: number }
 
-/** Fasce preferite §6: prima delle 10:00, 13:00–14:30, dopo le 20:00. */
-export const FASCE_DEFAULT: FasciaOraria[] = [
+/**
+ * §6: fasce ESCLUSE dai suggerimenti automatici (NON bloccanti se l'utente
+ * inserisce a mano): prima delle 10:00, 13:00–14:30, dopo le 20:00.
+ */
+export const FASCE_ESCLUSE_DEFAULT: FasciaOraria[] = [
   { daMin: 0, aMin: 10 * 60 },
   { daMin: 13 * 60, aMin: 14 * 60 + 30 },
   { daMin: 20 * 60, aMin: 24 * 60 },
@@ -24,26 +27,13 @@ export function sovrappongono(aIn: number, aFi: number, bIn: number, bFi: number
   return aIn < bFi && bIn < aFi
 }
 
-/**
- * Inizi liberi (in minuti) per un appuntamento di `durataMin`, dentro le fasce
- * preferite, che non intersecano nessuno degli intervalli `occupati`. `passoMin`
- * è la granularità dei suggerimenti.
- */
-export function slotLiberi(
-  durataMin: number,
-  occupati: IntervalloMin[],
-  fasce: FasciaOraria[] = FASCE_DEFAULT,
-  passoMin = 15,
-): number[] {
-  const liberi: number[] = []
-  for (const f of fasce) {
-    for (let inizio = f.daMin; inizio + durataMin <= f.aMin; inizio += passoMin) {
-      const fine = inizio + durataMin
-      const libero = !occupati.some((o) => sovrappongono(inizio, fine, o.inizio, o.fine))
-      if (libero) liberi.push(inizio)
-    }
-  }
-  return liberi
+/** true se lo slot [inizio,fine) non tocca NESSUNA fascia esclusa. */
+export function fuoriFasceEscluse(
+  inizio: number,
+  fine: number,
+  escluse: FasciaOraria[] = FASCE_ESCLUSE_DEFAULT,
+): boolean {
+  return !escluse.some((f) => sovrappongono(inizio, fine, f.daMin, f.aMin))
 }
 
 /**
@@ -56,6 +46,35 @@ export function zonaComoda(
   b: string | null | undefined,
 ): boolean {
   return a != null && b != null && a === b
+}
+
+/**
+ * Suggerimenti §6: per ogni appuntamento già fissato in zona comoda, propone lo
+ * slot subito PRIMA (inizio − durata) e subito DOPO (fine). Scarta i candidati
+ * fuori giornata, dentro una fascia esclusa, o sovrapposti a un appuntamento
+ * esistente. Se non c'è nessun appuntamento comodo, nessun suggerimento (niente
+ * fallback generico): la scelta del chiamante di quali passare come `comodi`.
+ */
+export function suggerisciSlot(
+  durataMin: number,
+  comodi: IntervalloMin[],
+  occupati: IntervalloMin[],
+  escluse: FasciaOraria[] = FASCE_ESCLUSE_DEFAULT,
+): number[] {
+  const candidati = new Set<number>()
+  for (const a of comodi) {
+    candidati.add(a.inizio - durataMin) // subito prima
+    candidati.add(a.fine) // subito dopo
+  }
+  const validi: number[] = []
+  for (const inizio of [...candidati].sort((x, y) => x - y)) {
+    const fine = inizio + durataMin
+    if (inizio < 0 || fine > 24 * 60) continue
+    if (!fuoriFasceEscluse(inizio, fine, escluse)) continue
+    if (occupati.some((o) => sovrappongono(inizio, fine, o.inizio, o.fine))) continue
+    validi.push(inizio)
+  }
+  return validi
 }
 
 /** "570" -> "09:30". */
@@ -79,7 +98,7 @@ export function oraRomaInMinuti(d: Date): number {
   return h * 60 + m
 }
 
-/** Converte gli appuntamenti di un giorno in intervalli-minuti per slotLiberi. */
+/** Converte appuntamenti (ISO) in intervalli-minuti per la logica di slot. */
 export function occupatiDaAppuntamenti(
   appuntamenti: { inizio: string; fine: string }[],
 ): IntervalloMin[] {
