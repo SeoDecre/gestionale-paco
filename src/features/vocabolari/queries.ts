@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { Aggiornamento } from '@/types/db'
 import * as api from './api'
 
 /**
@@ -8,6 +9,8 @@ import * as api from './api'
 export const chiaviVocabolari = {
   tutto: ['vocabolari'] as const,
   tabella: (t: string) => ['vocabolari', t] as const,
+  tutte: (t: string) => ['vocabolari', t, 'tutte'] as const,
+  cap: (zonaId: string) => ['zone_cap', zonaId] as const,
 }
 
 const OPZIONI = { staleTime: 5 * 60_000 }
@@ -67,3 +70,61 @@ export const useParametriTarget = () =>
     queryFn: api.listaParametriTarget,
     ...OPZIONI,
   })
+
+// -------------------------------------------------------- editor (§9) scrittura
+export const useTutteLeVoci = <T = unknown>(tabella: api.TabellaVocab) =>
+  useQuery({
+    queryKey: chiaviVocabolari.tutte(tabella),
+    queryFn: () => api.tutteLeVoci<T>(tabella),
+  })
+
+function useMutazioneVocab(tabella: api.TabellaVocab, fn: (v: never) => Promise<void>) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: fn as (v: unknown) => Promise<void>,
+    onSuccess: () => qc.invalidateQueries({ queryKey: chiaviVocabolari.tabella(tabella) }),
+  })
+}
+
+export const useCreaVoce = (tabella: api.TabellaVocab) =>
+  useMutazioneVocab(tabella, (valori: Record<string, unknown>) =>
+    api.creaVoce(tabella, valori),
+  )
+export const useAggiornaVoce = (tabella: api.TabellaVocab) =>
+  useMutazioneVocab(tabella, (v: { id: string; patch: Record<string, unknown> }) =>
+    api.aggiornaVoce(tabella, v.id, v.patch),
+  )
+export const useEliminaVoce = (tabella: api.TabellaVocab) =>
+  useMutazioneVocab(tabella, (id: string) => api.eliminaVoce(tabella, id))
+
+export function useAggiornaParametroTarget() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (v: { id: string; patch: Aggiornamento<'parametri_target'> }) =>
+      api.aggiornaParametroTarget(v.id, v.patch),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: chiaviVocabolari.tabella('parametri_target') }),
+  })
+}
+
+// -------------------------------------------------------------------- zone_cap
+export const useCapDiZona = (zonaId: string) =>
+  useQuery({
+    queryKey: chiaviVocabolari.cap(zonaId),
+    queryFn: () => api.capDiZona(zonaId),
+  })
+
+function useMutazioneCap(zonaId: string, fn: (v: never) => Promise<void>) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: fn as (v: unknown) => Promise<void>,
+    onSuccess: () => qc.invalidateQueries({ queryKey: chiaviVocabolari.cap(zonaId) }),
+  })
+}
+
+export const useCreaCap = (zonaId: string) =>
+  useMutazioneCap(zonaId, (v: { cap: string; comune: string | null }) =>
+    api.creaCap(zonaId, v.cap, v.comune),
+  )
+export const useEliminaCap = (zonaId: string) =>
+  useMutazioneCap(zonaId, (id: string) => api.eliminaCap(id))

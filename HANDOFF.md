@@ -150,7 +150,23 @@ Verification actually run: `tsc -b` clean, `npm run build` succeeds,
                                               on lavorazioni & esiti flag changes
 20260726140000_10_lead_nexi.sql               lead_nexi 1:1 (§10, 12 tri-state fields)
 20260726140100_04b_anagrafica_extra.sql        lead.email, lead.sito_web, sedi.nome
+20260726150000_12_offerte.sql                 offerte (per brand) + lead.offerta_consigliata_id
 ```
+
+### Milestone 4 — DONE (2026-07-26)
+
+Migration 12 pushed. `features/configurazione` (`/configurazione` route, "Config"
+nav): Offerte CRUD (archive-not-delete when proposed), Parametri target editor,
+Zone + CAP mapping, vocab editors (generic `EditorVocabolario` + specialized
+`EditorEsiti` for the is_chiusura/esito_positivo constraint). Vocab write API is
+in `features/vocabolari` (dynamic-table CRUD via casts); offerte in
+`features/offerte`. Verified via API (offerta+archive, vocab voce, target bands).
+Deploy is LIVE on Vercel (env vars set; app on master).
+
+**Reconciliation still pending:** contatto green-phone→auto-lavorazione;
+POS dichiarati/censiti counter; dashboard §3 completeness (Lead totali/per-fonte/
+search/quick-actions); lead "offerta consigliata" picker (offerte read path ready);
+offerte PDF upload (field exists, no UI yet).
 
 ### Milestone 2 — DONE and verified (2026-07-26)
 

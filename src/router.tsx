@@ -6,6 +6,7 @@ import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { LeadListPage } from '@/features/lead/LeadListPage'
 import { LeadDetailPage } from '@/features/lead/LeadDetailPage'
 import { AgendaPage } from '@/features/planning/AgendaPage'
+import { ConfigurazionePage } from '@/features/configurazione/ConfigurazionePage'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -21,6 +22,7 @@ export const router = createBrowserRouter([
       { path: 'agenda', element: <AgendaPage /> },
       { path: 'lead', element: <LeadListPage /> },
       { path: 'lead/:id', element: <LeadDetailPage /> },
+      { path: 'configurazione', element: <ConfigurazionePage /> },
     ],
   },
 ])

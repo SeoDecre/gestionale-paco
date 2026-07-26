@@ -403,6 +403,7 @@ export type Database = {
           id: string
           indirizzo: string | null
           note: string | null
+          offerta_consigliata_id: string | null
           owner_id: string
           piva: string | null
           provincia: string | null
@@ -425,6 +426,7 @@ export type Database = {
           id?: string
           indirizzo?: string | null
           note?: string | null
+          offerta_consigliata_id?: string | null
           owner_id: string
           piva?: string | null
           provincia?: string | null
@@ -447,6 +449,7 @@ export type Database = {
           id?: string
           indirizzo?: string | null
           note?: string | null
+          offerta_consigliata_id?: string | null
           owner_id?: string
           piva?: string | null
           provincia?: string | null
@@ -458,6 +461,13 @@ export type Database = {
           zona_manuale?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "lead_offerta_consigliata_id_fkey"
+            columns: ["offerta_consigliata_id"]
+            isOneToOne: false
+            referencedRelation: "offerte"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "lead_zona_id_fkey"
             columns: ["zona_id"]
@@ -605,6 +615,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      offerte: {
+        Row: {
+          brand: Database["public"]["Enums"]["brand"]
+          canone: number | null
+          created_at: string
+          descrizione: string | null
+          id: string
+          nome: string
+          owner_id: string
+          pdf_path: string | null
+          stato: Database["public"]["Enums"]["stato_offerta"]
+          target_max: Database["public"]["Enums"]["target_lettera"] | null
+          target_min: Database["public"]["Enums"]["target_lettera"] | null
+          updated_at: string
+        }
+        Insert: {
+          brand: Database["public"]["Enums"]["brand"]
+          canone?: number | null
+          created_at?: string
+          descrizione?: string | null
+          id?: string
+          nome: string
+          owner_id: string
+          pdf_path?: string | null
+          stato?: Database["public"]["Enums"]["stato_offerta"]
+          target_max?: Database["public"]["Enums"]["target_lettera"] | null
+          target_min?: Database["public"]["Enums"]["target_lettera"] | null
+          updated_at?: string
+        }
+        Update: {
+          brand?: Database["public"]["Enums"]["brand"]
+          canone?: number | null
+          created_at?: string
+          descrizione?: string | null
+          id?: string
+          nome?: string
+          owner_id?: string
+          pdf_path?: string | null
+          stato?: Database["public"]["Enums"]["stato_offerta"]
+          target_max?: Database["public"]["Enums"]["target_lettera"] | null
+          target_min?: Database["public"]["Enums"]["target_lettera"] | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       parametri_app: {
         Row: {
