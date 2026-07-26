@@ -1,6 +1,17 @@
 # AgentPro CRM — Handoff
 
-Last updated: 2026-07-20 (end of milestone 1 scaffold)
+Last updated: 2026-07-26 (dev project live + Milestone 2 in progress)
+
+---
+
+## ⚠️ Missing spec — read first
+
+The functional spec `AgentPro_Specifica_Sessionex sergio.md` (authoritative §1–§15)
+is **no longer present in the repo** — only this handoff and `README.md` remain.
+Milestone 2+ feature work is therefore built to the **settled decisions in this
+handoff** plus sensible defaults, with every non-obvious modelling choice marked
+`ASSUNZIONE:` in code comments and listed under "Assumptions" below. If the spec
+resurfaces, reconcile those assumptions against it.
 
 ---
 
@@ -124,18 +135,81 @@ Verification actually run: `tsc -b` clean, `npm run build` succeeds,
 20260720090300_03_parametri.sql               parametri_target, parametri_app,
                                               param_int(), suggerisci_target()
 20260720091600_16_seed_vocabolari.sql         per-user seed on auth.users insert
+20260726120000_04_lead.sql                    lead (+ zona-derivation trigger,
+                                              piva/cap checks), lead_brand
+20260726120100_05_contatti_sedi_pos.sql       contatti (1-principale index), sedi
+                                              (slot 1-4 trigger), sedi_pos,
+                                              lead_concorrenti
+20260726120200_09_allegati.sql                allegati + private Storage bucket
+                                              'allegati' + 4 owner-folder policies
+20260726130000_06_lavorazioni.sql             lavorazioni (esito, pos_richiesti,
+                                              contatto, azione successiva)
+20260726130100_07_appuntamenti.sql             appuntamenti; fine set by trigger;
+                                              EXCLUDE gist no-overlap (23P01)
+20260726130200_08_stato_derivato.sql           ricalcola_stato_lead() + triggers
+                                              on lavorazioni & esiti flag changes
 ```
 
-### NOT verified — read this before trusting anything
+### Milestone 2 — DONE and verified (2026-07-26)
 
-**No SQL has ever been executed.** There is no local Postgres (no Docker), and no
-cloud project exists yet. All 430 lines are proofread only. Expect real errors on
-first push — extension availability, `auth.users` trigger permissions, and the
-`applica_rls_owner` dynamic SQL are the likely first failures.
+Schema pushed clean; triggers/constraints functionally tested via `psql`
+(zona-derivation, slot 1-4 + max-4 raise, single-principale, piva check) and the
+whole path tested via **PostgREST with a real user JWT** (insert without owner_id
+→ trigger fills it, CAP → zona auto-derived, embedded reads, RLS scoping).
+`npm run build` + `oxlint` clean, 18 Vitest logic tests pass. **Not** visually
+rendered (no browser here).
 
-**The login page has never been rendered.** The Chrome extension is not connected
-in this environment, so no browser could be driven. It typechecks and builds; it
-has not been seen.
+**Reusable patterns established (copy these for Milestones 3+):**
+- `src/types/db.ts` — `Riga<'t'>` / `Inserimento<'t'>` / `Aggiornamento<'t'>` / `Enum<'e'>`.
+- Feature module shape: `api.ts` (throws; input types omit owner_id/id/timestamps,
+  owner_id reattached from session) + `queries.ts` (TanStack hooks + a `chiavi*`
+  key factory + invalidation) + `components/`.
+- Shared UI in `src/components/ui/`: `Bottone`, `Campo`/`Input`/`Select`/`Textarea`,
+  `Scheda`, `Pillola`, `Stato` (Caricamento/Errore/Vuoto), `BannerModifiche`.
+- `src/lib/useBozza.ts` — draft-editing hook powering the "Modifiche non salvate"
+  banner (dirty tracking + auto-resync on server change), reuse for all inline forms.
+- `src/lib/validazione.ts` — pure validators mirroring DB CHECKs (tested).
+- `src/lib/media.ts` + `useRegistratore.ts` — Storage upload/signed-URL + MediaRecorder.
+- Presentation maps centralised: `src/features/lead/brand.ts` (BADGE_BRAND/STATO).
+
+### Milestone 3 — DONE and verified (2026-07-26)
+
+Migrations 06/07/08 pushed clean. Verified via `psql` (per-brand independent
+status: NEXI=chiuso_vinto while HERA=chiuso_perso; latest-esito-wins; back-to-back
+appts legal; overlap → 23P01; cancel frees slot) and via PostgREST with a real
+JWT (register lavorazione → derived status + auto-badge; appt `fine` from trigger;
+overlap rejected 23P01). `build`/`lint` clean, 28 Vitest tests pass. Not visually
+rendered.
+
+Shipped: `features/lavorazioni` (registra lavorazione + optional appt in one
+action, with slot-conflict rollback; history panel on lead detail),
+`features/planning` (agenda day view, `slot.ts` pure slot-suggestion/overlap/zona-
+comoda logic — tested, `giorni.ts` day-range helpers), real `features/dashboard`
+(§3 tiles + today's appts + route map link). New routes `/agenda`; nav updated.
+Shared `src/lib/sessione.ts` (`ownerId()`) extracted and reused.
+
+**Next (Milestone 4 — Configurazione):** vocab editors (7 tables, write side),
+parametri_target editor, zone + zone_cap mapping UI, offerte CRUD (+ add
+`lead.offerta_consigliata_id` then). All read paths already exist in
+`features/vocabolari`. **Milestone 5 (NEXI §10) needs the missing spec** — the 12
+typed fields are guesswork without it.
+
+### Dev project — LIVE and verified (2026-07-26)
+
+- Supabase dev project **`jhiopnnrhokabishwvxh`** (West Europe / London), created
+  and linked. Pooler host for `psql`: `aws-1-eu-west-2.pooler.supabase.com:6543`,
+  user `postgres.jhiopnnrhokabishwvxh`.
+- Migrations 00–03 + 16 **pushed clean on first try** — no extension/trigger/RLS
+  errors. Confirmed via `psql`: 4 extensions, 10 enums, 10 tables all with RLS +
+  a policy, 7 functions.
+- First user created: **`pacoatworkdecre@gmail.com`** (email pre-confirmed). The
+  `auth.users` seed trigger fired correctly — 7 vocabularies + `parametri_app` +
+  4 `parametri_target` bands, all under one `owner_id`.
+- `.env.local` filled with real URL + anon key. `src/types/database.ts`
+  regenerated from the live schema (503 lines). `npm run build` passes.
+
+**Still NOT visually verified:** no browser was driven (Chrome extension not
+connected here). UI typechecks and builds; it has not been seen rendered.
 
 ---
 
@@ -189,18 +263,27 @@ has not been seen.
 3. **Vercel project with HTTPS** before milestone 6 — PWA install and web push
    both refuse to work without it. Paco must install the app to his Home Screen.
 
-### Immediately once the dev project exists
+### Immediately once the dev project exists — DONE 2026-07-26
 
-1. `supabase link --project-ref <ref>` then `supabase db push` — push 00→16
-   **incrementally**, not as one batch, since there's no local stack to catch
-   errors first.
-2. Create Paco's user; confirm the `auth.users` trigger fires and seeds all
-   7 vocabularies + the 4 `parametri_target` rows.
-3. Prove RLS actually blocks: query with a second user's JWT, expect zero rows.
-4. `supabase gen types typescript --linked > src/types/database.ts` — the file
-   is currently a hand-written **placeholder** and must be regenerated.
-5. Log in through the real UI and confirm the login page renders on iPhone,
-   iPad and desktop widths.
+1. ~~Link + push migrations~~ ✅ 00→16 pushed clean.
+2. ~~Create Paco's user + confirm seed~~ ✅ seed fired, all rows present.
+3. Prove RLS blocks with a second user's JWT — **still TODO** (structurally
+   verified: every table has RLS enabled + an `owner_id = auth.uid()` policy;
+   behavioural test with a signed anon JWT not yet run).
+4. ~~Regenerate types~~ ✅ `src/types/database.ts` regenerated.
+5. Log in through the real UI on iPhone/iPad/desktop — **still TODO** (no browser
+   here). `npm run dev` connects to the live project.
+
+### Assumptions made without the spec (reconcile if it resurfaces)
+
+- **`lead_brand` is an explicit per-lead set of brand rows** the user manages via
+  the testata badges; `stato` defaults `da_contattare` and is later recomputed by
+  the migration-08 trigger. (The spec may instead derive the brand set from the
+  existence of a lavorazione per brand.)
+- Field lists for `lead`, `contatti`, `sedi`, `sedi_pos` are the handoff's named
+  columns plus the obvious anagrafica fields; exact labels/optionality are guesses.
+- `lead.offerta_consigliata_id` is deferred to Milestone 4 (offerte table) to
+  avoid a forward FK dependency; added by a later migration.
 
 ### Then — milestone order
 

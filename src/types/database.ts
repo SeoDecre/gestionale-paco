@@ -14,6 +14,122 @@ export type Database = {
   }
   public: {
     Tables: {
+      allegati: {
+        Row: {
+          created_at: string
+          durata_sec: number | null
+          file_eliminato_at: string | null
+          id: string
+          integrato_at: string | null
+          lead_id: string
+          nome_file: string | null
+          owner_id: string
+          stato: Database["public"]["Enums"]["stato_audio"] | null
+          storage_path: string
+          tipo: Database["public"]["Enums"]["tipo_allegato"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          durata_sec?: number | null
+          file_eliminato_at?: string | null
+          id?: string
+          integrato_at?: string | null
+          lead_id: string
+          nome_file?: string | null
+          owner_id: string
+          stato?: Database["public"]["Enums"]["stato_audio"] | null
+          storage_path: string
+          tipo: Database["public"]["Enums"]["tipo_allegato"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          durata_sec?: number | null
+          file_eliminato_at?: string | null
+          id?: string
+          integrato_at?: string | null
+          lead_id?: string
+          nome_file?: string | null
+          owner_id?: string
+          stato?: Database["public"]["Enums"]["stato_audio"] | null
+          storage_path?: string
+          tipo?: Database["public"]["Enums"]["tipo_allegato"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "allegati_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "lead"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      appuntamenti: {
+        Row: {
+          brand: Database["public"]["Enums"]["brand"] | null
+          created_at: string
+          durata_min: number
+          fine: string
+          id: string
+          inizio: string
+          lavorazione_id: string | null
+          lead_id: string | null
+          luogo: string | null
+          note: string | null
+          owner_id: string
+          stato: Database["public"]["Enums"]["stato_appuntamento"]
+          updated_at: string
+        }
+        Insert: {
+          brand?: Database["public"]["Enums"]["brand"] | null
+          created_at?: string
+          durata_min: number
+          fine: string
+          id?: string
+          inizio: string
+          lavorazione_id?: string | null
+          lead_id?: string | null
+          luogo?: string | null
+          note?: string | null
+          owner_id: string
+          stato?: Database["public"]["Enums"]["stato_appuntamento"]
+          updated_at?: string
+        }
+        Update: {
+          brand?: Database["public"]["Enums"]["brand"] | null
+          created_at?: string
+          durata_min?: number
+          fine?: string
+          id?: string
+          inizio?: string
+          lavorazione_id?: string | null
+          lead_id?: string | null
+          luogo?: string | null
+          note?: string | null
+          owner_id?: string
+          stato?: Database["public"]["Enums"]["stato_appuntamento"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appuntamenti_lavorazione_id_fkey"
+            columns: ["lavorazione_id"]
+            isOneToOne: false
+            referencedRelation: "lavorazioni"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appuntamenti_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "lead"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       azioni_successive: {
         Row: {
           attivo: boolean
@@ -73,6 +189,66 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      contatti: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          lead_id: string
+          nome: string
+          note: string | null
+          owner_id: string
+          principale: boolean
+          provenienza: Database["public"]["Enums"]["provenienza_contatto"]
+          ruolo_id: string | null
+          telefono: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          lead_id: string
+          nome: string
+          note?: string | null
+          owner_id: string
+          principale?: boolean
+          provenienza?: Database["public"]["Enums"]["provenienza_contatto"]
+          ruolo_id?: string | null
+          telefono?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          lead_id?: string
+          nome?: string
+          note?: string | null
+          owner_id?: string
+          principale?: boolean
+          provenienza?: Database["public"]["Enums"]["provenienza_contatto"]
+          ruolo_id?: string | null
+          telefono?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contatti_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "lead"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contatti_ruolo_id_fkey"
+            columns: ["ruolo_id"]
+            isOneToOne: false
+            referencedRelation: "ruoli_contatto"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       esiti_lavorazione: {
         Row: {
@@ -139,6 +315,225 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      lavorazioni: {
+        Row: {
+          azione_successiva_id: string | null
+          brand: Database["public"]["Enums"]["brand"]
+          contatto_id: string | null
+          created_at: string
+          data_ora: string
+          esito_id: string | null
+          id: string
+          lead_id: string
+          note: string | null
+          owner_id: string
+          pos_richiesti: number | null
+          updated_at: string
+        }
+        Insert: {
+          azione_successiva_id?: string | null
+          brand: Database["public"]["Enums"]["brand"]
+          contatto_id?: string | null
+          created_at?: string
+          data_ora?: string
+          esito_id?: string | null
+          id?: string
+          lead_id: string
+          note?: string | null
+          owner_id: string
+          pos_richiesti?: number | null
+          updated_at?: string
+        }
+        Update: {
+          azione_successiva_id?: string | null
+          brand?: Database["public"]["Enums"]["brand"]
+          contatto_id?: string | null
+          created_at?: string
+          data_ora?: string
+          esito_id?: string | null
+          id?: string
+          lead_id?: string
+          note?: string | null
+          owner_id?: string
+          pos_richiesti?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lavorazioni_azione_successiva_id_fkey"
+            columns: ["azione_successiva_id"]
+            isOneToOne: false
+            referencedRelation: "azioni_successive"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lavorazioni_contatto_id_fkey"
+            columns: ["contatto_id"]
+            isOneToOne: false
+            referencedRelation: "contatti"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lavorazioni_esito_id_fkey"
+            columns: ["esito_id"]
+            isOneToOne: false
+            referencedRelation: "esiti_lavorazione"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lavorazioni_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "lead"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead: {
+        Row: {
+          cap: string | null
+          civico: string | null
+          codice_fiscale: string | null
+          comune: string | null
+          created_at: string
+          fatturato_mensile: number | null
+          fonte: Database["public"]["Enums"]["fonte_lead"]
+          id: string
+          indirizzo: string | null
+          note: string | null
+          owner_id: string
+          piva: string | null
+          provincia: string | null
+          ragione_sociale: string
+          target: Database["public"]["Enums"]["target_lettera"] | null
+          updated_at: string
+          zona_id: string | null
+          zona_manuale: boolean
+        }
+        Insert: {
+          cap?: string | null
+          civico?: string | null
+          codice_fiscale?: string | null
+          comune?: string | null
+          created_at?: string
+          fatturato_mensile?: number | null
+          fonte?: Database["public"]["Enums"]["fonte_lead"]
+          id?: string
+          indirizzo?: string | null
+          note?: string | null
+          owner_id: string
+          piva?: string | null
+          provincia?: string | null
+          ragione_sociale: string
+          target?: Database["public"]["Enums"]["target_lettera"] | null
+          updated_at?: string
+          zona_id?: string | null
+          zona_manuale?: boolean
+        }
+        Update: {
+          cap?: string | null
+          civico?: string | null
+          codice_fiscale?: string | null
+          comune?: string | null
+          created_at?: string
+          fatturato_mensile?: number | null
+          fonte?: Database["public"]["Enums"]["fonte_lead"]
+          id?: string
+          indirizzo?: string | null
+          note?: string | null
+          owner_id?: string
+          piva?: string | null
+          provincia?: string | null
+          ragione_sociale?: string
+          target?: Database["public"]["Enums"]["target_lettera"] | null
+          updated_at?: string
+          zona_id?: string | null
+          zona_manuale?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_zona_id_fkey"
+            columns: ["zona_id"]
+            isOneToOne: false
+            referencedRelation: "zone"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_brand: {
+        Row: {
+          brand: Database["public"]["Enums"]["brand"]
+          created_at: string
+          id: string
+          lead_id: string
+          owner_id: string
+          stato: Database["public"]["Enums"]["stato_lead"]
+          updated_at: string
+        }
+        Insert: {
+          brand: Database["public"]["Enums"]["brand"]
+          created_at?: string
+          id?: string
+          lead_id: string
+          owner_id: string
+          stato?: Database["public"]["Enums"]["stato_lead"]
+          updated_at?: string
+        }
+        Update: {
+          brand?: Database["public"]["Enums"]["brand"]
+          created_at?: string
+          id?: string
+          lead_id?: string
+          owner_id?: string
+          stato?: Database["public"]["Enums"]["stato_lead"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_brand_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "lead"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_concorrenti: {
+        Row: {
+          concorrente_id: string
+          created_at: string
+          lead_id: string
+          owner_id: string
+        }
+        Insert: {
+          concorrente_id: string
+          created_at?: string
+          lead_id: string
+          owner_id: string
+        }
+        Update: {
+          concorrente_id?: string
+          created_at?: string
+          lead_id?: string
+          owner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_concorrenti_concorrente_id_fkey"
+            columns: ["concorrente_id"]
+            isOneToOne: false
+            referencedRelation: "concorrenti_pos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_concorrenti_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "lead"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       parametri_app: {
         Row: {
@@ -220,6 +615,120 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      sedi: {
+        Row: {
+          cap: string | null
+          civico: string | null
+          comune: string | null
+          created_at: string
+          etichetta_id: string | null
+          id: string
+          indirizzo: string | null
+          lead_id: string
+          note: string | null
+          owner_id: string
+          provincia: string | null
+          slot: number
+          updated_at: string
+        }
+        Insert: {
+          cap?: string | null
+          civico?: string | null
+          comune?: string | null
+          created_at?: string
+          etichetta_id?: string | null
+          id?: string
+          indirizzo?: string | null
+          lead_id: string
+          note?: string | null
+          owner_id: string
+          provincia?: string | null
+          slot: number
+          updated_at?: string
+        }
+        Update: {
+          cap?: string | null
+          civico?: string | null
+          comune?: string | null
+          created_at?: string
+          etichetta_id?: string | null
+          id?: string
+          indirizzo?: string | null
+          lead_id?: string
+          note?: string | null
+          owner_id?: string
+          provincia?: string | null
+          slot?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sedi_etichetta_id_fkey"
+            columns: ["etichetta_id"]
+            isOneToOne: false
+            referencedRelation: "etichette_sede"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sedi_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "lead"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sedi_pos: {
+        Row: {
+          created_at: string
+          iban: string | null
+          id: string
+          note: string | null
+          owner_id: string
+          sede_id: string
+          seriale: string | null
+          tipo_pos_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          iban?: string | null
+          id?: string
+          note?: string | null
+          owner_id: string
+          sede_id: string
+          seriale?: string | null
+          tipo_pos_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          iban?: string | null
+          id?: string
+          note?: string | null
+          owner_id?: string
+          sede_id?: string
+          seriale?: string | null
+          tipo_pos_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sedi_pos_sede_id_fkey"
+            columns: ["sede_id"]
+            isOneToOne: false
+            referencedRelation: "sedi"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sedi_pos_tipo_pos_id_fkey"
+            columns: ["tipo_pos_id"]
+            isOneToOne: false
+            referencedRelation: "tipi_pos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tipi_pos: {
         Row: {
@@ -334,6 +843,10 @@ export type Database = {
       param_int: {
         Args: { p_chiave: string; p_default: number }
         Returns: number
+      }
+      ricalcola_stato_lead: {
+        Args: { p_brand: Database["public"]["Enums"]["brand"]; p_lead: string }
+        Returns: undefined
       }
       seed_vocabolari: { Args: { p_owner: string }; Returns: undefined }
       suggerisci_target: {
