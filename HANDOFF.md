@@ -153,7 +153,29 @@ Verification actually run: `tsc -b` clean, `npm run build` succeeds,
 20260726150000_12_offerte.sql                 offerte (per brand) + lead.offerta_consigliata_id
 20260726160000_11_import_dedup.sql            lead_simili() pg_trgm fuzzy dedup RPC
 20260726170000_13_liste_salvate.sql           liste_salvate (filtri + colonne export)
+20260726180000_14_push.sql                    push_subscriptions + appuntamenti.promemoria_inviato_at
+20260726190000_15_cron_notifiche.sql          invia_notifiche() + 3 pg_cron jobs
 ```
+
+### Milestone 6 — DONE server-side; needs on-device test (2026-07-26)
+
+PWA: `public/manifest.webmanifest`, icons (`public/icons/`, placeholder blue —
+replace with real logo), apple-touch meta in `index.html`, push-only SW
+(`public/sw.js`, no offline cache), registered in `main.tsx`.
+
+Push: VAPID keys generated; **public key in `VITE_VAPID_PUBLIC_KEY`** (in
+`.env.local` — **must also be added to Vercel** or subscribe fails on prod).
+`features/notifiche` (subscribe/unsubscribe + "Invia prova", in Config →
+Notifiche). Edge Function `supabase/functions/notifiche` (deployed, `--use-api`,
+no Docker) sends via web-push crypto + fetch; secrets set on Supabase (VAPID_*).
+`invia_notifiche()` helper reads service_role key from **Vault** (seeded manually,
+not in git) → pg_net → function; 3 cron jobs (05:00/18:00 UTC = Rome 07/20 CEST;
+promemoria */15).
+
+Verified: function boots + test path `{inviate:0}`; all 3 batch types 200 via
+service_role; full cron chain logged 200 in `net._http_response`; cron-guard 403s
+users. **NOT verified:** real push delivery — needs the app installed to an iPhone
+Home Screen + notifications granted. DST caveat on the 07:00/20:00 jobs (see mig 15).
 
 ### Milestone 8 — DONE (2026-07-26)
 

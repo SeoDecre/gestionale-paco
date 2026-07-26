@@ -4,14 +4,16 @@ import { EditorParametriTarget } from './EditorParametriTarget'
 import { EditorZone } from './EditorZone'
 import { EditorEsiti } from './EditorEsiti'
 import { EditorVocabolario } from './EditorVocabolario'
+import { NotificheCard } from '@/features/notifiche/NotificheCard'
 
-type Sezione = 'offerte' | 'target' | 'zone' | 'vocabolari'
+type Sezione = 'offerte' | 'target' | 'zone' | 'vocabolari' | 'notifiche'
 
 const SEZIONI: { chiave: Sezione; etichetta: string }[] = [
   { chiave: 'offerte', etichetta: 'Offerte' },
   { chiave: 'target', etichetta: 'Target' },
   { chiave: 'zone', etichetta: 'Zone' },
   { chiave: 'vocabolari', etichetta: 'Vocabolari' },
+  { chiave: 'notifiche', etichetta: 'Notifiche' },
 ]
 
 export function ConfigurazionePage() {
@@ -54,6 +56,7 @@ export function ConfigurazionePage() {
           <EditorEsiti />
         </>
       )}
+      {sezione === 'notifiche' && <NotificheCard />}
     </div>
   )
 }

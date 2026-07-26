@@ -80,6 +80,7 @@ export type Database = {
           luogo: string | null
           note: string | null
           owner_id: string
+          promemoria_inviato_at: string | null
           stato: Database["public"]["Enums"]["stato_appuntamento"]
           updated_at: string
         }
@@ -95,6 +96,7 @@ export type Database = {
           luogo?: string | null
           note?: string | null
           owner_id: string
+          promemoria_inviato_at?: string | null
           stato?: Database["public"]["Enums"]["stato_appuntamento"]
           updated_at?: string
         }
@@ -110,6 +112,7 @@ export type Database = {
           luogo?: string | null
           note?: string | null
           owner_id?: string
+          promemoria_inviato_at?: string | null
           stato?: Database["public"]["Enums"]["stato_appuntamento"]
           updated_at?: string
         }
@@ -739,6 +742,36 @@ export type Database = {
           soglia_min_annua?: number | null
           target?: Database["public"]["Enums"]["target_lettera"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          owner_id: string
+          p256dh: string
+          user_agent: string | null
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          owner_id: string
+          p256dh: string
+          user_agent?: string | null
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          owner_id?: string
+          p256dh?: string
+          user_agent?: string | null
         }
         Relationships: []
       }
