@@ -145,8 +145,7 @@ merge modes, mail parser, report aggregations). No component/E2E tests.
 
 **Everything below is committed and pushed to `origin/master`** (last commit
 `52ae229`, working tree clean). Migrations 00–25 are all applied to the dev
-project. **The push is on GitHub but the Vercel deploy has not landed** — see
-Next Steps §0, it is the current blocker.
+project. **Whether the Vercel deploy landed is unverified** — see Next Steps §0.
 
 ### Verification run at handoff time
 
@@ -425,25 +424,30 @@ column picker, saved lists (`liste_salvate`, upsert by name).
 Ordered by value. The first two are the only things standing between this build
 and being usable with real data.
 
-### 0. BLOCKER — the Vercel deploy has not landed
+### 0. Verify the Vercel deploy — status genuinely unknown
 
-`master` was pushed (`52ae229`) and the site still serves the **old** bundle.
+What is certain: `master` is on GitHub (`fca5561`), and for several minutes
+after the push the site was still serving the **pre-session** bundle.
 
 ```
 atteso (build locale) : index-B9VPjwG_.js
-servito da Vercel     : index-Dj_X6QVd.js   <- pre-sessione
+servito allora        : index-Dj_X6QVd.js   <- pre-sessione
 ```
 
-`npm run build` is clean locally, so this is a deploy problem, not a code
-problem. Check **vercel.com → gestionale-paco → Deployments** for `52ae229`.
-Most likely causes, in order: the build failed on a missing env var
-(`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` / `VITE_VAPID_PUBLIC_KEY` — the
-SPA throws at module load without the first two); the Git integration got
-disconnected; or the deploy is simply still queued.
+What is **not** certain: whether it has landed since. Repeated `curl` polling of
+`gestionale-paco.vercel.app` tripped Vercel's bot protection, and the site now
+answers **HTTP 403 "Vercel Security Checkpoint"** to scripted requests. That is
+an artefact of the polling, not a fault of the app — a real browser is very
+likely fine.
 
-**Until this is fixed nothing else can be verified in a browser**, because the
-deployed app is not the code in this repo. No Vercel token is available to any
-agent so far — this needs the user or a token.
+**Do not poll the deployed URL in a loop from an agent.** It triggers the
+checkpoint and then nobody can read the served bundle at all. Check once, or
+check `vercel.com → gestionale-paco → Deployments`.
+
+If the deploy really did fail, the first suspects are the env vars
+(`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` / `VITE_VAPID_PUBLIC_KEY` — the
+SPA throws at module load without the first two) or a disconnected Git
+integration. `npm run build` is clean locally, so it is not the code.
 
 ### 1. Import the legacy data — file is already generated
 
@@ -611,9 +615,15 @@ keeps working independently, so nothing breaks locally.
 - **Foreground `sleep`** is blocked in this harness. To wait on a deploy, use a
   backgrounded poll (`run_in_background`) that exits on success *or* timeout —
   a poll that only prints on success is indistinguishable from one still running.
-- **Assuming a `git push` means a live deploy.** It does not: `52ae229` is on
-  GitHub and the site is still serving the pre-session bundle. Always check the
-  served asset hash, not just the push exit code.
+- **Assuming a `git push` means a live deploy.** It does not — after the push the
+  site was still serving the pre-session bundle. Check the served asset hash, not
+  the push exit code.
+- **Polling the deployed URL in a loop.** A 40-iteration `curl` poll waiting for
+  the new bundle tripped **Vercel's bot protection**: the site went from `200`
+  with the old bundle to `403 "Vercel Security Checkpoint"`, after which the
+  bundle hash could not be read at all — so the check destroyed its own evidence
+  and left the deploy status unknown. Check once and look at the Vercel
+  dashboard instead.
 
 - **`npm create vite@latest .`** in the project root — silently cancels because
   the directory isn't empty (the spec file was already there) and just prints
