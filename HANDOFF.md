@@ -1,8 +1,8 @@
 # AgentPro CRM — Handoff
 
 Last updated: 2026-07-29 — all 8 milestones, the §4/§5 polish, **and the port of
-the legacy CRM 3.0 feature set**. Remaining work: apply migrations 17–25 (blocked
-on credentials), migrate the 160 real leads, real-device verification.
+the legacy CRM 3.0 feature set**. Migrations 17–25 are **applied** and types
+regenerated. Remaining: run the data migration, real-device verification.
 
 ---
 
@@ -224,12 +224,33 @@ That folder is **gitignored**: it is a reference, not part of this build.
 `AgentPro_CRM_3.0 copia/data/crm.db` holds **160 leads**, 11 lavorazioni,
 9 appuntamenti, 8 contatti, 9 aree, 2 mandati and 1 agent profile.
 
+**The project already holds 157 of those leads** — a previous session imported
+the same Excel. All 157 legacy P.IVAs are already in the DB and none are
+DB-only, so a naive migration would mint fresh UUIDs, collide with the
+`lead_piva_uk` unique index on `(owner_id, piva)` and fail the whole batch.
+
+The script therefore takes a P.IVA → existing-id map and **reuses the existing
+id**, turning the restore into an in-place update. It also omits null keys, so
+it merges rather than blanking fields the 3.0 never knew about.
+
 ```bash
-python3 scripts/migra-crm3.py "AgentPro_CRM_3.0 copia/data/crm.db" > migrazione.json
-# then in the app: Configurazione → Backup → Scegli file .json → Ripristina
+# 1. current ids, straight from the project
+curl -s -X POST "https://api.supabase.com/v1/projects/jhiopnnrhokabishwvxh/database/query" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" \
+  -d '{"query":"select id, piva from public.lead where piva is not null"}' > esistenti.json
+
+# 2. convert
+python3 scripts/migra-crm3.py "AgentPro_CRM_3.0 copia/data/crm.db" \
+  --mappa-esistenti esistenti.json > migrazione.json
+
+# 3. in the app: Configurazione → Backup → Scegli file .json → Ripristina
 ```
 
-It emits the app's own backup format, so the restore goes through RLS with the
+Verified on the real data: 160 leads out, 157 updating existing rows, 3 new,
+zero duplicate ids, zero duplicate P.IVAs. **Not yet run** — the restore is the
+user's call.
+
+Without the map it emits the same backup format, so the restore goes through RLS with the
 real user's JWT — no service key in a script — and the JSON can be inspected
 before it touches anything. Ids are `uuid5` of the legacy id, so re-running
 updates instead of duplicating. Verified to convert cleanly: 160/160 leads.
@@ -457,12 +478,17 @@ master-detail split. This is a real unbuilt spec section.
   from §8. Ask the user for one anonymised call-center email and tune the regexes
   against it. Until then treat it as unproven. *(Blocked on the user.)*
 - **Replace the placeholder PWA icons** in `public/icons/` with a real logo.
-- **Credentials are not in the repo.** `.env.local` carries only the URL, anon
-  key and VAPID public key — there is no app-user password and no DB password, so
-  a session that wants to redo the "verify through PostgREST with a real user
-  JWT" check has to ask the user for them first. The 2026-07-28 polish was
-  therefore verified against the schema (migrations + generated types) rather
-  than by live insert.
+- **Credentials.** `.env.local` carries only the URL, anon key and VAPID public
+  key. There is still no app-user password, so "verify through PostgREST with a
+  real user JWT" needs asking the user.
+  The **Supabase access token** belongs to the `pacosoftdecre` account (org
+  `qqtdxpclixznwithghnm`), NOT to `SeoDecre` — logging in as the wrong one makes
+  `db push` and `gen types` fail with a management-API 403 that looks like a
+  broken project but isn't. It is now stored in the macOS Keychain via
+  `supabase login --token`, so the CLI works out of the box.
+  For read-only schema checks the Management API works well:
+  `POST https://api.supabase.com/v1/projects/<ref>/database/query` with
+  `{"query": "..."}` and the token as Bearer.
 - **Prove RLS behaviourally.** Structurally every table has RLS + an
   `owner_id = auth.uid()` policy, but a second user's JWT has never been used to
   confirm the block. Worth one psql/PostgREST session.

@@ -4,6 +4,14 @@
 Uso:
     python3 scripts/migra-crm3.py "AgentPro_CRM_3.0 copia/data/crm.db" > migrazione.json
 
+    # Se nel progetto ci sono GIA' dei lead (importati dallo stesso Excel),
+    # passare la mappa P.IVA -> id esistente, altrimenti si creano doppioni:
+    python3 scripts/migra-crm3.py crm.db --mappa-esistenti esistenti.json > migrazione.json
+
+    dove esistenti.json e' [{"piva": "...", "id": "uuid"}, ...] preso dal
+    progetto. Per ogni P.IVA gia' presente si RIUSA il suo id, cosi' l'upsert
+    aggiorna la riga invece di scontrarsi con l'indice unico su (owner, piva).
+
 Poi: Configurazione -> Backup -> "Scegli file .json" -> Ripristina.
 Il ripristino fa upsert e riscrive owner_id con l'utente collegato, quindi si
 puo' rilanciare senza creare doppioni.
@@ -20,6 +28,8 @@ LIMITI NOTI, dichiarati invece che nascosti:
     lo stato derivato del lead diventa "in lavorazione", che e' corretto.
   - i ruoli dei contatti finiscono nelle note, per lo stesso motivo.
   - gli allegati non si migrano: i file stanno su disco, non nel database.
+  - i campi che il 3.0 non conosce NON vengono inviati (niente chiavi a null):
+    l'upsert aggiorna solo cio' che sa, invece di azzerare quello che c'e'.
 """
 
 import json
@@ -34,6 +44,14 @@ NS = uuid.UUID("6f9619ff-8b86-d011-b42d-00c04fc964ff")
 
 def uid(prefisso, valore):
     return str(uuid.uuid5(NS, f"crm3:{prefisso}:{valore}"))
+
+
+def senza_nulli(d):
+    """Toglie le chiavi a None: l'upsert aggiorna solo i campi che conosciamo.
+
+    Mandare esplicitamente null azzererebbe dati gia' presenti nel progetto,
+    che e' l'opposto di quello che deve fare una migrazione."""
+    return {k: v for k, v in d.items() if v is not None}
 
 
 def s(v):
@@ -75,7 +93,8 @@ def brand(riga):
     return "HERA_COMM" if "HERA" in b else "NEXI"
 
 
-def converti(percorso_db):
+def converti(percorso_db, mappa_piva=None):
+    mappa_piva = mappa_piva or {}
     con = sqlite3.connect(percorso_db)
     con.row_factory = sqlite3.Row
 
@@ -157,14 +176,21 @@ def converti(percorso_db):
         tabelle["zone_comune"] = zone_comune
 
     # --------------------------------------------------------------- lead
-    lead, lead_brand = [], []
+    lead, lead_brand, riusati = [], [], []
     for l in righe("leads"):
-        lid = uid("lead", l["id"])
         piva = s(l.get("piva"))
         # La colonna accetta solo 11 cifre: quello che non lo e' va scartato,
         # altrimenti il CHECK rifiuta l'intera riga.
         if piva and not (piva.isdigit() and len(piva) == 11):
             piva = None
+        # Se la P.IVA e' gia' nel progetto si riusa il SUO id: l'upsert
+        # aggiorna quella riga. Con un id nuovo l'indice unico su
+        # (owner_id, piva) rifiuterebbe l'inserimento e farebbe fallire
+        # l'intero blocco.
+        lid = mappa_piva.get(piva) if piva else None
+        riusato = lid is not None
+        if lid is None:
+            lid = uid("lead", l["id"])
         cap = s(l.get("cap"))
         if cap and not (cap.isdigit() and len(cap) == 5):
             cap = None
@@ -194,7 +220,7 @@ def converti(percorso_db):
         )
 
         lead.append(
-            {
+            senza_nulli({
                 "id": lid,
                 "ragione_sociale": s(l.get("nome")) or "Senza nome",
                 "piva": piva,
@@ -220,21 +246,30 @@ def converti(percorso_db):
                 "import_sessione": s(l.get("import_session")),
                 "note": note or None,
                 "zona_manuale": False,
-            }
+            })
         )
         lead_brand.append(
             {
-                "id": uid("leadbrand", l["id"]),
+                "id": uid("leadbrand", lid),
                 "lead_id": lid,
                 "brand": brand(l),
                 "stato": "da_contattare",  # lo ricalcola il trigger dalle lavorazioni
             }
         )
+        if riusato:
+            riusati.append(lid)
 
     tabelle["lead"] = lead
     tabelle["lead_brand"] = lead_brand
 
     # ----------------------------------------------------------- contatti
+    # id del lead per id legacy, cosi' i figli puntano alla riga giusta
+    per_legacy = {}
+    for l in righe("leads"):
+        pv = s(l.get("piva"))
+        pv = pv if (pv and pv.isdigit() and len(pv) == 11) else None
+        per_legacy[str(l["id"])] = (mappa_piva.get(pv) if pv else None) or uid("lead", l["id"])
+
     contatti = []
     for c in righe("contatti"):
         nome = s(c.get("nome"))
@@ -246,7 +281,7 @@ def converti(percorso_db):
         contatti.append(
             {
                 "id": uid("contatto", c["id"]),
-                "lead_id": uid("lead", c["lead_id"]),
+                "lead_id": per_legacy.get(str(c["lead_id"]), uid("lead", c["lead_id"])),
                 "nome": nome,
                 "telefono": s(c.get("tel")),
                 "note": note or None,
@@ -261,7 +296,7 @@ def converti(percorso_db):
     lavorazioni = []
     idlead = {l["id"] for l in lead}
     for v in righe("lavorazioni"):
-        lid = uid("lead", v["lead_id"])
+        lid = per_legacy.get(str(v["lead_id"]), uid("lead", v["lead_id"]))
         if lid not in idlead:
             continue
         testo = " | ".join(
@@ -292,7 +327,7 @@ def converti(percorso_db):
     # ------------------------------------------------------- appuntamenti
     appuntamenti = []
     for a in righe("appuntamenti"):
-        lid = uid("lead", a["lead_id"])
+        lid = per_legacy.get(str(a["lead_id"]), uid("lead", a["lead_id"]))
         if lid not in idlead:
             continue
         giorno = s(a.get("data"))
@@ -320,7 +355,14 @@ def converti(percorso_db):
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         sys.exit(__doc__)
-    backup = converti(sys.argv[1])
+    mappa = {}
+    if "--mappa-esistenti" in sys.argv:
+        percorso = sys.argv[sys.argv.index("--mappa-esistenti") + 1]
+        for r in json.load(open(percorso)):
+            if r.get("piva") and r.get("id"):
+                mappa[str(r["piva"])] = str(r["id"])
+        print(f"-- P.IVA gia' nel progetto: {len(mappa)}", file=sys.stderr)
+    backup = converti(sys.argv[1], mappa)
     conteggi = {k: len(v) for k, v in backup["tabelle"].items()}
     print(json.dumps(backup, ensure_ascii=False, indent=2))
     print(f"\n-- righe convertite: {conteggi}", file=sys.stderr)
