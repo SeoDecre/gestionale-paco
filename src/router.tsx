@@ -9,6 +9,7 @@ import { AgendaPage } from '@/features/planning/AgendaPage'
 import { ConfigurazionePage } from '@/features/configurazione/ConfigurazionePage'
 import { ImportPage } from '@/features/import/ImportPage'
 import { ReportPage } from '@/features/report/ReportPage'
+import { AreePage } from '@/features/zone/AreePage'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
       { path: 'agenda', element: <AgendaPage /> },
       { path: 'lead', element: <LeadListPage /> },
       { path: 'lead/:id', element: <LeadDetailPage /> },
+      { path: 'aree', element: <AreePage /> },
       { path: 'configurazione', element: <ConfigurazionePage /> },
       { path: 'importa', element: <ImportPage /> },
       { path: 'report', element: <ReportPage /> },

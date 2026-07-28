@@ -14,9 +14,19 @@ import type { Aggiornamento, Enum, Inserimento, Riga } from '@/types/db'
 type SenzaMeta<T> = Omit<T, 'owner_id' | 'id' | 'created_at' | 'updated_at'>
 
 // ---------------------------------------------------------------- view-model
+/** Colori opzionali di una voce di vocabolario (porting CRM 3.0). */
+export type VoceColorata = {
+  nome: string
+  colore_bg: string | null
+  colore_fg: string | null
+  colore_dot: string | null
+}
+
 export type LeadConBrand = Riga<'lead'> & {
   lead_brand: Pick<Riga<'lead_brand'>, 'brand' | 'stato'>[]
   zone: { nome: string } | null
+  // Stato di VERIFICA dell'anagrafica: asse parallelo allo stato commerciale.
+  stati_verifica: (VoceColorata & { confermato: boolean }) | null
 }
 export type ContattoConRuolo = Riga<'contatti'> & {
   ruoli_contatto: { nome: string } | null
@@ -42,7 +52,7 @@ export type PatchPos = Aggiornamento<'sedi_pos'>
 export async function listaLead(cerca?: string): Promise<LeadConBrand[]> {
   let q = supabase
     .from('lead')
-    .select('*, lead_brand(brand, stato), zone(nome)')
+    .select('*, lead_brand(brand, stato), zone(nome), stati_verifica(nome, colore_bg, colore_fg, colore_dot, confermato)')
     .order('ragione_sociale')
   if (cerca && cerca.trim()) q = q.ilike('ragione_sociale', `%${cerca.trim()}%`)
   const { data, error } = await q
@@ -53,7 +63,7 @@ export async function listaLead(cerca?: string): Promise<LeadConBrand[]> {
 export async function getLead(id: string): Promise<LeadConBrand> {
   const { data, error } = await supabase
     .from('lead')
-    .select('*, lead_brand(brand, stato), zone(nome)')
+    .select('*, lead_brand(brand, stato), zone(nome), stati_verifica(nome, colore_bg, colore_fg, colore_dot, confermato)')
     .eq('id', id)
     .single()
   if (error) throw error

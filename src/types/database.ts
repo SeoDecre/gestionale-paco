@@ -847,6 +847,13 @@ export type Database = {
             referencedRelation: "zone"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "lead_verifica_id_fkey"
+            columns: ["verifica_id"]
+            isOneToOne: false
+            referencedRelation: "stati_verifica"
+            referencedColumns: ["id"]
+          },
         ]
       }
       lead_brand: {

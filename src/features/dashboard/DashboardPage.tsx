@@ -2,16 +2,31 @@ import { Link } from 'react-router-dom'
 import { Scheda } from '@/components/ui/Scheda'
 import { Pillola } from '@/components/ui/Pillola'
 import { Caricamento, Errore, Vuoto } from '@/components/ui/Stato'
-import { formattaOra } from '@/lib/format'
+import { formattaOra, formattaData } from '@/lib/format'
 import { urlPercorso, indirizzoCompleto } from '@/lib/maps'
-import { useContatoriStato, useChiusiMese } from './queries'
+import {
+  useContatoriStato,
+  useChiusiMese,
+  usePanoramica,
+  useUltimeLavorazioni,
+} from './queries'
 import { useAppuntamentiGiorno } from '@/features/planning/queries'
 import { giornoISO } from '@/features/planning/giorni'
 import type { AppuntamentoConLead } from '@/features/planning/api'
+import type { UltimaLavorazione } from './api'
 
+/**
+ * "Oggi" — §3 più le metriche del CRM 3.0.
+ *
+ * Le piastrelle sono LINK verso la lista già filtrata (querystring): nel 3.0
+ * cliccare un numero portava alla lista corrispondente, ed è il gesto che
+ * trasforma un cruscotto in uno strumento di lavoro.
+ */
 export function DashboardPage() {
   const contatori = useContatoriStato()
   const chiusi = useChiusiMese()
+  const pano = usePanoramica()
+  const ultime = useUltimeLavorazioni()
   const oggi = giornoISO()
   const appuntamenti = useAppuntamentiGiorno(oggi)
 
@@ -19,60 +34,177 @@ export function DashboardPage() {
   const percorso = urlPercorso(attivi.map((a) => a.lead ?? {}))
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-5xl">
       <h1 className="mb-4 text-titolo font-semibold">Oggi</h1>
 
-      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Tile etichetta="Da contattare" valore={contatori.data?.da_contattare} tinta="neutro" />
-        <Tile etichetta="In lavorazione" valore={contatori.data?.in_lavorazione} tinta="info" />
-        <Tile etichetta="Vinti (mese)" valore={chiusi.data?.vinti} tinta="successo" />
-        <Tile etichetta="Persi (mese)" valore={chiusi.data?.persi} tinta="pericolo" />
+      {/* ------------------------------------------------------------- KPI */}
+      <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <Kpi
+          valore={pano.data ? `${pano.data.tassoChiusura}%` : '—'}
+          etichetta="Tasso di chiusura"
+          nota={
+            pano.data
+              ? `${pano.data.vintiTotali} vinti su ${pano.data.contattati} contattati`
+              : undefined
+          }
+          tinta={pano.data && pano.data.tassoChiusura >= 20 ? 'successo' : 'avviso'}
+        />
+        <Kpi
+          valore={pano.data ? String(pano.data.lavSettimana) : '—'}
+          etichetta="Lavorazioni (7 giorni)"
+          nota={pano.data ? `${pano.data.lavMese} nel mese` : undefined}
+          tinta="info"
+        />
+        <Kpi
+          valore={pano.data ? String(pano.data.mediaLavorazioni) : '—'}
+          etichetta="Media lavorazioni per lead"
+          nota={pano.data ? `su ${pano.data.totaleLead} lead` : undefined}
+          tinta="neutro"
+        />
+      </div>
+      {pano.isError && <Errore errore={pano.error} />}
+
+      {/* ------------------------------------------------------ piastrelle */}
+      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+        <Tile etichetta="Lead totali" valore={pano.data?.totaleLead} tinta="neutro" a="/lead" />
+        <Tile
+          etichetta="Da contattare"
+          valore={contatori.data?.da_contattare}
+          tinta="neutro"
+          a="/lead?stato=da_contattare"
+        />
+        <Tile
+          etichetta="In lavorazione"
+          valore={contatori.data?.in_lavorazione}
+          tinta="info"
+          a="/lead?stato=in_lavorazione"
+        />
+        <Tile
+          etichetta="Vinti (mese)"
+          valore={chiusi.data?.vinti}
+          tinta="successo"
+          a="/lead?stato=chiuso_vinto"
+        />
+        <Tile
+          etichetta="Persi (mese)"
+          valore={chiusi.data?.persi}
+          tinta="pericolo"
+          a="/lead?stato=chiuso_perso"
+        />
+        <Tile
+          etichetta="Target A"
+          valore={pano.data?.perTarget.A}
+          tinta="successo"
+          a="/lead?target=A"
+        />
+        <Tile
+          etichetta="Target E"
+          valore={pano.data?.perTarget.E}
+          tinta="avviso"
+          a="/lead?target=E"
+        />
+        <Tile
+          etichetta="Self gen"
+          valore={pano.data?.perFonte.self_gen}
+          tinta="info"
+          a="/lead?selfgen=1"
+        />
       </div>
       {contatori.isError && <Errore errore={contatori.error} />}
 
-      <Scheda
-        titolo="Appuntamenti di oggi"
-        azione={
-          percorso && attivi.length > 1 ? (
-            <a href={percorso} className="text-etichetta text-info-soft-text">
-              Apri percorso
-            </a>
-          ) : undefined
-        }
-      >
-        {appuntamenti.isLoading && <Caricamento />}
-        {appuntamenti.isError && <Errore errore={appuntamenti.error} />}
-        {attivi.length === 0 && <Vuoto testo="Nessun appuntamento oggi." />}
-        <ul className="flex flex-col gap-2">
-          {attivi.map((a) => (
-            <RigaAppuntamento key={a.id} app={a} />
-          ))}
-        </ul>
-      </Scheda>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Scheda
+          titolo="Appuntamenti di oggi"
+          azione={
+            percorso && attivi.length > 1 ? (
+              <a
+                href={percorso}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-etichetta text-info-soft-text"
+              >
+                Apri percorso
+              </a>
+            ) : undefined
+          }
+        >
+          {appuntamenti.isLoading && <Caricamento />}
+          {appuntamenti.isError && <Errore errore={appuntamenti.error} />}
+          {attivi.length === 0 && <Vuoto testo="Nessun appuntamento oggi." />}
+          <ul className="flex flex-col gap-2">
+            {attivi.map((a) => (
+              <RigaAppuntamento key={a.id} app={a} />
+            ))}
+          </ul>
+        </Scheda>
+
+        <Scheda titolo="Ultime lavorazioni">
+          {ultime.isLoading && <Caricamento />}
+          {ultime.isError && <Errore errore={ultime.error} />}
+          {ultime.data && ultime.data.length === 0 && (
+            <Vuoto testo="Nessuna lavorazione registrata." />
+          )}
+          <ul className="flex flex-col gap-2">
+            {ultime.data?.map((l) => (
+              <RigaLavorazione key={l.id} lav={l} />
+            ))}
+          </ul>
+        </Scheda>
+      </div>
     </div>
   )
 }
 
+const COLORE = {
+  neutro: 'text-testo',
+  info: 'text-info-soft-text',
+  successo: 'text-success-soft-text',
+  pericolo: 'text-danger-soft-text',
+  avviso: 'text-warning-soft-text',
+} as const
+
+type Tinta = keyof typeof COLORE
+
+function Kpi({
+  valore,
+  etichetta,
+  nota,
+  tinta,
+}: {
+  valore: string
+  etichetta: string
+  nota?: string
+  tinta: Tinta
+}) {
+  return (
+    <div className="rounded-card border border-bordo bg-superficie p-3 text-center">
+      <p className={`text-titolo font-semibold ${COLORE[tinta]}`}>{valore}</p>
+      <p className="text-etichetta text-testo-debole">{etichetta}</p>
+      {nota && <p className="mt-0.5 text-etichetta text-testo-debole opacity-70">{nota}</p>}
+    </div>
+  )
+}
+
+/** Piastrella cliccabile: porta alla lista lead già filtrata. */
 function Tile({
   etichetta,
   valore,
   tinta,
+  a,
 }: {
   etichetta: string
   valore: number | undefined
-  tinta: 'neutro' | 'info' | 'successo' | 'pericolo'
+  tinta: Tinta
+  a: string
 }) {
-  const colore = {
-    neutro: 'text-testo',
-    info: 'text-info-soft-text',
-    successo: 'text-success-soft-text',
-    pericolo: 'text-danger-soft-text',
-  }[tinta]
   return (
-    <div className="rounded-card border border-bordo bg-superficie p-3 text-center">
-      <p className={`text-titolo font-semibold ${colore}`}>{valore ?? '—'}</p>
+    <Link
+      to={a}
+      className="rounded-card border border-bordo bg-superficie p-3 text-center hover:border-info-soft-border"
+    >
+      <p className={`text-titolo font-semibold ${COLORE[tinta]}`}>{valore ?? '—'}</p>
       <p className="text-etichetta text-testo-debole">{etichetta}</p>
-    </div>
+    </Link>
   )
 }
 
@@ -94,6 +226,22 @@ function RigaAppuntamento({ app }: { app: AppuntamentoConLead }) {
         {indirizzo && <p className="truncate text-etichetta text-testo-debole">{indirizzo}</p>}
       </div>
       {app.stato === 'fatto' && <Pillola tinta="successo">Fatto</Pillola>}
+    </li>
+  )
+}
+
+function RigaLavorazione({ lav }: { lav: UltimaLavorazione }) {
+  const e = lav.esiti_lavorazione
+  const tinta = e?.is_chiusura ? (e.esito_positivo ? 'successo' : 'pericolo') : 'info'
+  return (
+    <li className="flex items-center justify-between gap-2 rounded-card border border-bordo px-3 py-2">
+      <div className="min-w-0">
+        <Link to={`/lead/${lav.lead_id}`} className="block truncate text-campo font-medium underline">
+          {lav.lead?.ragione_sociale ?? 'Lead'}
+        </Link>
+        <p className="text-etichetta text-testo-debole">{formattaData(lav.data_ora)}</p>
+      </div>
+      {e && <Pillola tinta={tinta}>{e.nome}</Pillola>}
     </li>
   )
 }
