@@ -143,8 +143,10 @@ merge modes, mail parser, report aggregations). No component/E2E tests.
 
 ## Current Progress
 
-**Everything below is committed and pushed to `origin/master`** (8 commits, working
-tree clean as of this writing).
+**Everything below is committed and pushed to `origin/master`** (last commit
+`52ae229`, working tree clean). Migrations 00–25 are all applied to the dev
+project. **The push is on GitHub but the Vercel deploy has not landed** — see
+Next Steps §0, it is the current blocker.
 
 ### Verification run at handoff time
 
@@ -273,11 +275,12 @@ notes instead. Attachments are files on disk, not rows, so they do not migrate.
 | 6 | Push + PWA (§7) | server-side done + verified; **real delivery untested** |
 | 7 | Imports (§8) | done; Excel verified on the real file, **mail parser untuned** |
 | 8 | Report + Export (§12/§13) | done, verified via API |
+| — | **Porting CRM 3.0** (2026-07-29) | code done; migrations applied; **data migration not run**, **never seen rendered** |
 
 ### Routes shipped (`src/router.tsx`)
 
-`/login` · `/` dashboard · `/agenda` · `/lead` · `/lead/:id` · `/configurazione` ·
-`/importa` · `/report`
+`/login` · `/` dashboard · `/agenda` · `/agenda/settimana` · `/lead` · `/lead/:id` ·
+`/aree` · `/configurazione` · `/importa` · `/report`
 
 ### Migrations (all pushed clean to the dev project)
 
@@ -309,6 +312,27 @@ notes instead. Attachments are files on disk, not rows, so they do not migrate.
 20260726170000_13_liste_salvate.sql           liste_salvate (filtri + colonne export)
 20260726180000_14_push.sql                    push_subscriptions + appuntamenti.promemoria_inviato_at
 20260726190000_15_cron_notifiche.sql          invia_notifiche() + 3 pg_cron jobs
+
+--- porting CRM 3.0, applicate il 2026-07-29 ---
+20260729090000_17_agente_mandati.sql          profilo_agente (PK = owner_id) + mandati
+                                              per brand + seed_agente_mandati()
+20260729090100_18_verifica_e_colori.sql       stati_verifica, esigenze_pos,
+                                              lead_esigenze, lead.verifica_id,
+                                              colore_bg/fg/dot sui vocabolari
+20260729090200_19_zone_comune.sql             zone_comune + tg_lead_deriva_zona
+                                              riscritto (CAP vince, comune ripiego)
+20260729090300_20_sedi_pos_estesi.sql         sedi.principale/consegna_pos (+ trigger
+                                              prima-sede-principale), sedi_pos.quantita/
+                                              esigenza_id/differenzia_pagamenti/amex
+20260729090400_21_offerte_estese.sql          categoria, transato_min/max, commissione,
+                                              target_cliente, testo_estratto, versione
+20260729090500_22_lead_nexi_intervista.sql    ~14 colonne nuove + 2 jsonb
+                                              (commissioni_dettaglio, modalita_attuali)
+20260729090600_23_lead_campi_legacy.sql       telefono, cellulare, pec, mcc, psp_attuale,
+                                              orari, forma_giuridica, n_punti_vendita,
+                                              proposta_offerta, import_sessione
+20260729090700_24_campi_personalizzati.sql    tipo_campo enum + campi_config/campi_valori
+20260729090800_25_seed_nuovo_utente.sql       aggancia i nuovi seed a auth.users
 ```
 
 Note the filenames are **not** in numeric order (04b and 11 land after 12) — the
@@ -371,6 +395,19 @@ column picker, saved lists (`liste_salvate`, upsert by name).
   when there is nothing to search, and the UI hides the button on `null`.
 - `src/features/lead/pos.ts` — dichiarati-vs-censiti comparison (tested).
 - `src/features/lead/offerta.ts` — target-band matching for offers (tested).
+- `src/features/lead/filtri.ts` — lead-list filtering + sorting (tested). Note the
+  rule: a stato matches if **any** brand is in it; stato+brand together must look
+  at the *same* brand.
+- `src/lib/condivisione.ts` — .ics / Google Calendar / mailto / WhatsApp /
+  Telegram / signature block (tested).
+- `src/lib/indirizzo.ts` — paste-an-address parser + Photon/OSM lookup (tested).
+- `src/features/offerte/estrazione.ts` — pull canone/commissione/transato out of
+  offer text, and `ordinaPerTransato` (the matching engine) (tested).
+- `src/features/report/testoReport.ts` — report as shareable text (tested).
+- `src/lib/scarica.ts` — blob download with object-URL revoke; `apriEsterno`.
+- New shared UI: `BarraSchede`/`Gruppo` (scrollable tabs), `PilloleMultiple`,
+  `PillolaColorata` (vocabulary colours with semantic fallback),
+  `RiconosciIndirizzo`.
 - `src/lib/errors.ts` — Italian error mapping; `23P01` → "Slot già occupato".
 - `src/lib/sessione.ts` — `ownerId()`.
 - `src/lib/media.ts` + `features/lead/useRegistratore.ts` — Storage upload /
@@ -385,94 +422,92 @@ column picker, saved lists (`liste_salvate`, upsert by name).
 
 ## Next Steps
 
-Ordered by value. Nothing here is blocked on the user except where marked.
+Ordered by value. The first two are the only things standing between this build
+and being usable with real data.
 
-### 1. Get eyes on it — highest value, blocked on the user
+### 0. BLOCKER — the Vercel deploy has not landed
 
-Nothing has ever been seen rendered. Before building more features:
+`master` was pushed (`52ae229`) and the site still serves the **old** bundle.
 
-- Open `gestionale-paco.vercel.app` on desktop, iPad, and iPhone; log in as
-  `pacoatworkdecre@gmail.com`; walk lead → lavorazione → agenda → report.
-- Specifically exercise the 2026-07-28 polish: tap a contact's green phone button
-  on the **iPhone** and confirm both that it dials and that the automatic
-  lavorazione appears; upload a PDF to an offer and reopen it from the lead.
-- **Install to the iPhone Home Screen**, grant notifications, hit Config →
-  Notifiche → "Invia prova", and confirm a push actually arrives. This is the one
-  M6 claim that has never been proven.
-- If the user connects `claude-in-chrome`, a future agent can do the desktop half
-  of this without them.
+```
+atteso (build locale) : index-B9VPjwG_.js
+servito da Vercel     : index-Dj_X6QVd.js   <- pre-sessione
+```
 
-### 2. Reconciliation polish — DONE 2026-07-28
+`npm run build` is clean locally, so this is a deploy problem, not a code
+problem. Check **vercel.com → gestionale-paco → Deployments** for `52ae229`.
+Most likely causes, in order: the build failed on a missing env var
+(`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` / `VITE_VAPID_PUBLIC_KEY` — the
+SPA throws at module load without the first two); the Git integration got
+disconnected; or the deploy is simply still queued.
 
-All four items shipped. No migrations were needed — every column already existed.
+**Until this is fixed nothing else can be verified in a browser**, because the
+deployed app is not the code in this repo. No Vercel token is available to any
+agent so far — this needs the user or a token.
 
-- **Contatto green-phone button** (§4). `PannelloContatti.tsx` now renders a green
-  `tel:` link per contact with a phone number; tapping it fires a quick
-  lavorazione noted `Chiamato [nome] il [data] alle [ora]` via the previously
-  unused `testoChiamataAutomatica`. It does **not** `preventDefault` — the dial
-  must happen even if the write is slow or fails, so the failure path shows
-  "Chiamata partita, ma la lavorazione non è stata salvata."
-  The lavorazione carries `esito_id = NULL`; migration 08 handles that explicitly
-  ("lavorazioni ma nessun esito → in_lavorazione"), which is the right outcome —
-  he called them, so they are no longer `da_contattare`.
-  *Brand:* `lavorazioni.brand` is NOT NULL, so the button needs one. It uses
-  `lead_brand[0].brand`, the same arbitrary-but-consistent pick
-  `PannelloLavorazioni` already makes for `brandIniziale`. With no brand on the
-  lead the link still dials but writes nothing.
-- **"POS dichiarati (a voce) / censiti" counter** (§4/§5) — `features/lead/pos.ts`
-  (pure, tested) + `components/ContatorePos.tsx`. Shown in `PannelloSedi` and,
-  with a live override, inside Registra lavorazione so the comparison tracks the
-  number **being typed**.
-  *Decision worth keeping:* dichiarati is the **most recent** non-null
-  `pos_richiesti`, **not the sum**. Hearing "ho 3 POS" on two calls means 3, not
-  6 — each declaration photographs the same estate. Also fixed on the way past:
-  the form used to accept a negative or fractional POS count and let the
-  `smallint >= 0` CHECK reject it server-side.
-- **`lead.offerta_consigliata_id` picker** (§4) — in `AnagraficaScheda`, a select
-  grouped "Adatte al target X" / "Fuori target" by `features/lead/offerta.ts`
-  (pure, tested). Out-of-band offers are shown, not hidden: the target is a
-  suggestion, not a constraint. An already-linked offer stays in the list even
-  once archived, or archiving would erase the record of what was proposed (§9).
-  *Landmine:* the target letters are revenue bands, not alphabetical —
-  `ORDINE_TARGET = ['C','B','A','E']` (C < 40k annual, E > 140k, per migration
-  03). Sorting them as strings gives the wrong interval.
-- **Offerta PDF upload** (§9) — `EditorOfferte` uploads to `{owner}/offerte/` via
-  the new `caricaPdfOfferta` in `lib/media.ts`; `caricaAllegato` was refactored
-  onto a shared `carica(cartella, …)`. Only the **first** path segment matters to
-  the storage policies (migration 09), so a non-lead folder is legal.
-  `features/offerte/BottonePdfOfferta.tsx` does the signed-URL open, reused on
-  both the config list and the lead scheda.
-- **§4 "Verifica dati online"** — `lib/ricerche.ts` (pure, tested) builds Google
-  and Facebook searches from the business name + comune, plus a quoted-P.IVA
-  Google search next to the P.IVA field. Built from the **draft** values, not the
-  saved ones: you search precisely in order to correct what is on screen.
+### 1. Import the legacy data — file is already generated
 
-**Still not verified in a browser** — like everything else here, these typecheck,
-build, lint and have their pure logic under test, but no one has seen them
-render. The phone button in particular wants a real iPhone: whether `tel:`
-navigation lets the mutation complete is a device behaviour, not a code fact.
+`migrazione.json` sits in the project root (116 KB, **gitignored**, contains
+customer PII). It was produced with the P.IVA map already applied.
 
-### 3. Dashboard §3 completeness — unblocked
+In the app: **Configurazione → Backup → Scegli file .json → Ripristina**.
 
-`DashboardPage.tsx` currently renders 4 tiles (Da contattare, In lavorazione,
-Vinti mese, Persi mese) plus today's appointments and a route map link. §3 also
-asks for: a **Lead totali** tile, **per-fonte** tiles, a quick search, "accessi
-rapidi", and tiles that are **clickable through to a filtered lead list**.
+Expect: 157 leads *updated in place*, 3 new, plus 9 zone / 26 comuni / 2 mandati
+/ 1 profilo agente / 2 contatti / 11 lavorazioni / 9 appuntamenti.
 
-### 4. §15 iPad master-detail layout — unbuilt, never previously tracked
+This needs a browser session — no agent has an app-user JWT (see Credentials
+below). To regenerate the file, see "Migrating the real data" above.
 
-§15 wants: lead list permanently visible on the left with the detail on the right;
-2-column field pairs where sensible; the 4 section buttons in a horizontal row
-instead of a 2×2 grid; and **text never shrunk** to gain horizontal space —
-density comes from more elements side by side, not smaller type.
+### 2. Get eyes on it — still the largest gap, and it grew
 
-Only 16 responsive utility classes exist across the whole codebase (a few
-2-column field pairs in `AnagraficaScheda`, `PannelloNexi`,
-`FormRegistraLavorazione`, `ReportPage`, `DashboardPage`, `EditorOfferte`,
-`ImportMail`). `AppShell.tsx` has **no breakpoints at all** — there is no
-master-detail split. This is a real unbuilt spec section.
+Nothing in this app has **ever** been seen rendered, and this session rewrote
+every main screen (shell, lead list, dashboard, NEXI panel, sedi, planning).
+The risk is now higher than it was, not lower.
 
-### 5. Loose ends
+Walk on a real iPhone: lead list → open a lead → Registra lavorazione → Agenda →
+Settimana → Report. Specifically worth looking at, because they are new and
+unproven:
+
+- the bottom tab bar — thumb reach and 44px targets;
+- the six NEXI tabs (they scroll horizontally);
+- the green phone button on a contact: does it dial **and** log the lavorazione?
+  Whether `tel:` navigation lets the mutation finish is a device behaviour, not
+  a code fact;
+- `RiconosciIndirizzo`: paste `VIA ROMA 31 - 57016 - ROSIGNANO (LI)`;
+- the week grid on a phone (7 columns become stacked sections).
+
+If the user connects `claude-in-chrome`, an agent can do the desktop half alone.
+
+### 3. Prove a push actually arrives
+
+The one M6 claim never demonstrated. iPhone → Share → Add to Home Screen → open
+from the icon → allow notifications → Config → Notifiche → "Invia prova".
+Everything server-side is verified (function boots, cron chain logged 200); only
+delivery to a handset is unproven.
+
+### 4. Rotate the Supabase access token
+
+`sbp_2471904a…` was pasted into a chat transcript on 2026-07-29. Dashboard →
+Account → Access Tokens → revoke + regenerate. The Keychain copy the CLI uses
+keeps working independently, so nothing breaks locally.
+
+### 5. Spec sections: where they now stand
+
+- **§3 dashboard — DONE.** 3 KPI (tasso di chiusura calcolato sui *contattati*,
+  lavorazioni 7gg/mese, media per lead) + 8 tiles that link through to the lead
+  list already filtered via querystring.
+- **§15 iPad — PARTLY done.** The app is now genuinely responsive (bottom tabs on
+  phone, fixed sidebar from `lg`, table→cards, 7-col week grid→stacked). What is
+  still **not** built is the true master-detail split: lead list permanently on
+  the left with the detail on the right. `AppShell` has breakpoints now, but the
+  lead list and lead detail are still separate routes. Doing it properly means
+  making `/lead` render an optional detail pane instead of navigating away.
+- **Bundle is 1,125 kB (338 kB gzip), no code splitting.** SheetJS is the bulk.
+  The fix is a dynamic `import()` of `xlsx` in the import and report features,
+  which are its only consumers. Deferred deliberately — worth doing before
+  adding anything else heavy (e.g. `pdfjs-dist`).
+
+### 6. Loose ends
 
 - **Mail parser needs a real sample.** `features/import/mail.ts` was written blind
   from §8. Ask the user for one anonymised call-center email and tune the regexes
@@ -504,6 +539,32 @@ master-detail split. This is a real unbuilt spec section.
 
 ## What Worked
 
+- **Hand-writing the generated types, then proving it by regeneration.** With no
+  DB access, `src/types/database.ts` was patched by script to match the new
+  migrations so the app could keep compiling. When access finally arrived and
+  `supabase gen types` overwrote the file, `tsc -b` passed **unchanged** — the
+  hand-written types had matched the real schema. Worth repeating when blocked:
+  write the types you believe in, then verify rather than assume.
+- **Measuring the overlap BEFORE running a data migration.** The script was ready
+  and looked fine. Checking the target first showed all 157 legacy P.IVAs were
+  already in the project, so the naive uuid5 ids would have collided with
+  `lead_piva_uk` and failed the whole batch. Ten seconds of counting prevented a
+  broken import of live data.
+- **Reusing the app's own backup format as the migration vehicle.** The restore
+  path already existed, runs under the real user's JWT and RLS, and the JSON can
+  be read before it touches anything. No service key in a script, no second
+  code path to maintain.
+- **Idempotent migrations** (`add column if not exists`, `drop constraint if
+  exists`). `db push` ran nine migrations clean against a database that had
+  drifted slightly (`sedi_pos.note` already existed) and only emitted NOTICEs.
+- **The Management API for read-only schema checks** when the CLI came up short:
+  `POST /v1/projects/<ref>/database/query` with `{"query": "..."}`. That is how
+  the seed backfill and the 157-lead overlap were confirmed.
+- **Pure module + tests, dumb React** — again. Every ported feature landed as a
+  tested pure module (`condivisione`, `indirizzo`, `filtri`, `estrazione`,
+  `testoReport`, `pos`, `offerta`, `ricerche`) plus a thin component. 52 → 141
+  tests, still ~250 ms.
+
 - **Interviewing before building.** The spec had four holes it didn't know about:
   lead status was never defined despite the dashboard counting it; "zona comoda"
   underpins all of Planning but was undefined; "Chiusi (mese)" silently merged won
@@ -528,6 +589,31 @@ master-detail split. This is a real unbuilt spec section.
   user has rejected.
 
 ## What Didn't Work
+
+- **The Supabase CLI was logged into the wrong account.** `db push` and
+  `gen types` failed with a management-API **403** that reads like a dead or
+  deleted project. It was not: the anon key answered `200 []` the whole time.
+  The stored Keychain token belonged to `SeoDecre`; the project lives under
+  **`pacosoftdecre`** (org `qqtdxpclixznwithghnm`). Fixed with
+  `supabase login --token <sbp_…>`, which replaces the Keychain entry.
+  *If a future session sees that 403, check the account before suspecting the
+  project.*
+- **`supabase db execute`** does not exist in CLI v2.105 (it just prints the `db`
+  help). `supabase inspect db table-stats` produced no output either. Use the
+  Management API query endpoint instead.
+- **Reading the CLI token out of the macOS Keychain** (`security
+  find-generic-password -w`) is blocked by the sandbox classifier. Don't route
+  around it — ask the user for the token.
+- **A uuid5-keyed data migration into a non-empty project.** See "What Worked" —
+  it would have collided with the P.IVA unique index. The script now takes
+  `--mappa-esistenti` and reuses existing ids, and omits null keys so it merges
+  instead of blanking fields the 3.0 never had.
+- **Foreground `sleep`** is blocked in this harness. To wait on a deploy, use a
+  backgrounded poll (`run_in_background`) that exits on success *or* timeout —
+  a poll that only prints on success is indistinguishable from one still running.
+- **Assuming a `git push` means a live deploy.** It does not: `52ae229` is on
+  GitHub and the site is still serving the pre-session bundle. Always check the
+  served asset hash, not just the push exit code.
 
 - **`npm create vite@latest .`** in the project root — silently cancels because
   the directory isn't empty (the spec file was already there) and just prints
@@ -588,8 +674,40 @@ npm run lint         # oxlint
 npm run test         # vitest run
 
 supabase link --project-ref jhiopnnrhokabishwvxh
+supabase db push --dry-run          # what WOULD be applied — always run this first
 supabase db push                    # apply migrations to the linked project
 supabase db reset --linked          # from-zero rebuild — DEV PROJECT ONLY, never prod
 supabase gen types typescript --linked > src/types/database.ts
 supabase functions deploy notifiche --use-api    # no Docker
+```
+
+The CLI must be logged into **`pacosoftdecre`**, not `SeoDecre` — the wrong
+account gives a 403 that looks like a missing project:
+
+```bash
+supabase login --token sbp_...      # stores in the macOS Keychain
+supabase projects list              # must show jhiopnnrhokabishwvxh
+```
+
+Read-only SQL when the CLI can't help (schema checks, row counts):
+
+```bash
+curl -s -X POST "https://api.supabase.com/v1/projects/jhiopnnrhokabishwvxh/database/query" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"query":"select count(*) from public.lead"}'
+```
+
+Is the deploy actually live? Compare the served bundle to the local build:
+
+```bash
+npm run build && ls dist/assets | grep -o 'index-[A-Za-z0-9_-]*\.js'
+curl -s https://gestionale-paco.vercel.app/ | grep -o 'index-[A-Za-z0-9_-]*\.js'
+```
+
+Regenerate the legacy data migration:
+
+```bash
+python3 scripts/migra-crm3.py "AgentPro_CRM_3.0 copia/data/crm.db" \
+  --mappa-esistenti esistenti.json > migrazione.json
 ```
