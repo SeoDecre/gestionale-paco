@@ -14,6 +14,306 @@ export type Database = {
   }
   public: {
     Tables: {
+      stati_verifica: {
+        Row: {
+          attivo: boolean
+          colore_bg: string | null
+          colore_dot: string | null
+          colore_fg: string | null
+          created_at: string
+          id: string
+          nome: string
+          ordine: number
+          owner_id: string
+          updated_at: string
+          confermato: boolean
+        }
+        Insert: {
+          attivo?: boolean
+          colore_bg?: string | null
+          colore_dot?: string | null
+          colore_fg?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          ordine?: number
+          owner_id: string
+          updated_at?: string
+          confermato?: boolean
+        }
+        Update: {
+          attivo?: boolean
+          colore_bg?: string | null
+          colore_dot?: string | null
+          colore_fg?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          ordine?: number
+          owner_id?: string
+          updated_at?: string
+          confermato?: boolean
+        }
+        Relationships: []
+      }
+      esigenze_pos: {
+        Row: {
+          attivo: boolean
+          colore_bg: string | null
+          colore_dot: string | null
+          colore_fg: string | null
+          created_at: string
+          id: string
+          nome: string
+          ordine: number
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          attivo?: boolean
+          colore_bg?: string | null
+          colore_dot?: string | null
+          colore_fg?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          ordine?: number
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          attivo?: boolean
+          colore_bg?: string | null
+          colore_dot?: string | null
+          colore_fg?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          ordine?: number
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profilo_agente: {
+        Row: {
+          area: string | null
+          cell: string | null
+          cognome: string | null
+          created_at: string
+          email: string | null
+          indirizzo: string | null
+          nome: string | null
+          note: string | null
+          owner_id: string
+          tel: string | null
+          updated_at: string
+        }
+        Insert: {
+          area?: string | null
+          cell?: string | null
+          cognome?: string | null
+          created_at?: string
+          email?: string | null
+          indirizzo?: string | null
+          nome?: string | null
+          note?: string | null
+          owner_id: string
+          tel?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area?: string | null
+          cell?: string | null
+          cognome?: string | null
+          created_at?: string
+          email?: string | null
+          indirizzo?: string | null
+          nome?: string | null
+          note?: string | null
+          owner_id?: string
+          tel?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      mandati: {
+        Row: {
+          admin: string | null
+          area: string | null
+          brand: Database["public"]["Enums"]["brand"]
+          cell: string | null
+          codice_agente: string | null
+          created_at: string
+          email: string | null
+          firma: string | null
+          id: string
+          indirizzo: string | null
+          note: string | null
+          owner_id: string
+          ragione_sociale: string | null
+          referente: string | null
+          tel: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin?: string | null
+          area?: string | null
+          brand: Database["public"]["Enums"]["brand"]
+          cell?: string | null
+          codice_agente?: string | null
+          created_at?: string
+          email?: string | null
+          firma?: string | null
+          id?: string
+          indirizzo?: string | null
+          note?: string | null
+          owner_id: string
+          ragione_sociale?: string | null
+          referente?: string | null
+          tel?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin?: string | null
+          area?: string | null
+          brand?: Database["public"]["Enums"]["brand"]
+          cell?: string | null
+          codice_agente?: string | null
+          created_at?: string
+          email?: string | null
+          firma?: string | null
+          id?: string
+          indirizzo?: string | null
+          note?: string | null
+          owner_id?: string
+          ragione_sociale?: string | null
+          referente?: string | null
+          tel?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      zone_comune: {
+        Row: {
+          comune: string
+          created_at: string
+          id: string
+          owner_id: string
+          zona_id: string
+        }
+        Insert: {
+          comune: string
+          created_at?: string
+          id?: string
+          owner_id: string
+          zona_id: string
+        }
+        Update: {
+          comune?: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          zona_id?: string
+        }
+        Relationships: []
+      }
+      lead_esigenze: {
+        Row: {
+          created_at: string
+          esigenza_id: string
+          id: string
+          lead_id: string
+          owner_id: string
+        }
+        Insert: {
+          created_at?: string
+          esigenza_id: string
+          id?: string
+          lead_id: string
+          owner_id: string
+        }
+        Update: {
+          created_at?: string
+          esigenza_id?: string
+          id?: string
+          lead_id?: string
+          owner_id?: string
+        }
+        Relationships: []
+      }
+      campi_config: {
+        Row: {
+          attivo: boolean
+          brand: Database["public"]["Enums"]["brand"]
+          created_at: string
+          etichetta: string
+          id: string
+          opzioni: Json
+          ordine: number
+          owner_id: string
+          sezione: string
+          tipo: Database["public"]["Enums"]["tipo_campo"]
+          updated_at: string
+        }
+        Insert: {
+          attivo?: boolean
+          brand: Database["public"]["Enums"]["brand"]
+          created_at?: string
+          etichetta: string
+          id?: string
+          opzioni?: Json
+          ordine?: number
+          owner_id: string
+          sezione?: string
+          tipo?: Database["public"]["Enums"]["tipo_campo"]
+          updated_at?: string
+        }
+        Update: {
+          attivo?: boolean
+          brand?: Database["public"]["Enums"]["brand"]
+          created_at?: string
+          etichetta?: string
+          id?: string
+          opzioni?: Json
+          ordine?: number
+          owner_id?: string
+          sezione?: string
+          tipo?: Database["public"]["Enums"]["tipo_campo"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      campi_valori: {
+        Row: {
+          campo_id: string
+          created_at: string
+          id: string
+          lead_id: string
+          owner_id: string
+          updated_at: string
+          valore: string | null
+        }
+        Insert: {
+          campo_id: string
+          created_at?: string
+          id?: string
+          lead_id: string
+          owner_id: string
+          updated_at?: string
+          valore?: string | null
+        }
+        Update: {
+          campo_id?: string
+          created_at?: string
+          id?: string
+          lead_id?: string
+          owner_id?: string
+          updated_at?: string
+          valore?: string | null
+        }
+        Relationships: []
+      }
       allegati: {
         Row: {
           created_at: string
@@ -135,6 +435,9 @@ export type Database = {
       }
       azioni_successive: {
         Row: {
+          colore_bg: string | null
+          colore_fg: string | null
+          colore_dot: string | null
           attivo: boolean
           created_at: string
           id: string
@@ -144,6 +447,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          colore_bg?: string | null
+          colore_fg?: string | null
+          colore_dot?: string | null
           attivo?: boolean
           created_at?: string
           id?: string
@@ -153,6 +459,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          colore_bg?: string | null
+          colore_fg?: string | null
+          colore_dot?: string | null
           attivo?: boolean
           created_at?: string
           id?: string
@@ -165,6 +474,9 @@ export type Database = {
       }
       concorrenti_pos: {
         Row: {
+          colore_bg: string | null
+          colore_fg: string | null
+          colore_dot: string | null
           attivo: boolean
           created_at: string
           id: string
@@ -174,6 +486,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          colore_bg?: string | null
+          colore_fg?: string | null
+          colore_dot?: string | null
           attivo?: boolean
           created_at?: string
           id?: string
@@ -183,6 +498,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          colore_bg?: string | null
+          colore_fg?: string | null
+          colore_dot?: string | null
           attivo?: boolean
           created_at?: string
           id?: string
@@ -255,6 +573,9 @@ export type Database = {
       }
       esiti_lavorazione: {
         Row: {
+          colore_bg: string | null
+          colore_fg: string | null
+          colore_dot: string | null
           attivo: boolean
           created_at: string
           esito_positivo: boolean | null
@@ -266,6 +587,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          colore_bg?: string | null
+          colore_fg?: string | null
+          colore_dot?: string | null
           attivo?: boolean
           created_at?: string
           esito_positivo?: boolean | null
@@ -277,6 +601,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          colore_bg?: string | null
+          colore_fg?: string | null
+          colore_dot?: string | null
           attivo?: boolean
           created_at?: string
           esito_positivo?: boolean | null
@@ -291,6 +618,9 @@ export type Database = {
       }
       etichette_sede: {
         Row: {
+          colore_bg: string | null
+          colore_fg: string | null
+          colore_dot: string | null
           attivo: boolean
           created_at: string
           id: string
@@ -300,6 +630,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          colore_bg?: string | null
+          colore_fg?: string | null
+          colore_dot?: string | null
           attivo?: boolean
           created_at?: string
           id?: string
@@ -309,6 +642,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          colore_bg?: string | null
+          colore_fg?: string | null
+          colore_dot?: string | null
           attivo?: boolean
           created_at?: string
           id?: string
@@ -395,6 +731,17 @@ export type Database = {
       }
       lead: {
         Row: {
+          telefono: string | null
+          cellulare: string | null
+          pec: string | null
+          forma_giuridica: string | null
+          mcc: string | null
+          psp_attuale: string | null
+          orari: string | null
+          n_punti_vendita: number | null
+          proposta_offerta: string | null
+          import_sessione: string | null
+          verifica_id: string | null
           cap: string | null
           civico: string | null
           codice_fiscale: string | null
@@ -418,6 +765,17 @@ export type Database = {
           zona_manuale: boolean
         }
         Insert: {
+          telefono?: string | null
+          cellulare?: string | null
+          pec?: string | null
+          forma_giuridica?: string | null
+          mcc?: string | null
+          psp_attuale?: string | null
+          orari?: string | null
+          n_punti_vendita?: number | null
+          proposta_offerta?: string | null
+          import_sessione?: string | null
+          verifica_id?: string | null
           cap?: string | null
           civico?: string | null
           codice_fiscale?: string | null
@@ -441,6 +799,17 @@ export type Database = {
           zona_manuale?: boolean
         }
         Update: {
+          telefono?: string | null
+          cellulare?: string | null
+          pec?: string | null
+          forma_giuridica?: string | null
+          mcc?: string | null
+          psp_attuale?: string | null
+          orari?: string | null
+          n_punti_vendita?: number | null
+          proposta_offerta?: string | null
+          import_sessione?: string | null
+          verifica_id?: string | null
           cap?: string | null
           civico?: string | null
           codice_fiscale?: string | null
@@ -556,6 +925,20 @@ export type Database = {
       }
       lead_nexi: {
         Row: {
+          sicuro_no_nexi: boolean | null
+          mai_stato_nexi: boolean | null
+          piva_stessa_punti: boolean | null
+          due_iban: boolean | null
+          differenzia_pagamenti: boolean | null
+          tasso_interesse: string | null
+          commissioni_dettaglio: Json
+          difficolta_agenzia: boolean | null
+          storni: boolean | null
+          interruzioni_servizio: boolean | null
+          modalita_attuali: Json
+          connettivita: string | null
+          soddisfatto_banca: boolean | null
+          cambio_banca: boolean | null
           amex_attivare: boolean | null
           amex_attivo: boolean | null
           amex_continuare: boolean | null
@@ -574,6 +957,20 @@ export type Database = {
           vende_online: boolean | null
         }
         Insert: {
+          sicuro_no_nexi?: boolean | null
+          mai_stato_nexi?: boolean | null
+          piva_stessa_punti?: boolean | null
+          due_iban?: boolean | null
+          differenzia_pagamenti?: boolean | null
+          tasso_interesse?: string | null
+          commissioni_dettaglio?: Json
+          difficolta_agenzia?: boolean | null
+          storni?: boolean | null
+          interruzioni_servizio?: boolean | null
+          modalita_attuali?: Json
+          connettivita?: string | null
+          soddisfatto_banca?: boolean | null
+          cambio_banca?: boolean | null
           amex_attivare?: boolean | null
           amex_attivo?: boolean | null
           amex_continuare?: boolean | null
@@ -592,6 +989,20 @@ export type Database = {
           vende_online?: boolean | null
         }
         Update: {
+          sicuro_no_nexi?: boolean | null
+          mai_stato_nexi?: boolean | null
+          piva_stessa_punti?: boolean | null
+          due_iban?: boolean | null
+          differenzia_pagamenti?: boolean | null
+          tasso_interesse?: string | null
+          commissioni_dettaglio?: Json
+          difficolta_agenzia?: boolean | null
+          storni?: boolean | null
+          interruzioni_servizio?: boolean | null
+          modalita_attuali?: Json
+          connettivita?: string | null
+          soddisfatto_banca?: boolean | null
+          cambio_banca?: boolean | null
           amex_attivare?: boolean | null
           amex_attivo?: boolean | null
           amex_continuare?: boolean | null
@@ -651,6 +1062,16 @@ export type Database = {
       }
       offerte: {
         Row: {
+          categoria: string | null
+          transato_min: number | null
+          transato_max: number | null
+          commissione: number | null
+          target_cliente: string | null
+          note: string | null
+          testo_estratto: string | null
+          nome_file: string | null
+          versione: number
+          sostituisce_id: string | null
           brand: Database["public"]["Enums"]["brand"]
           canone: number | null
           created_at: string
@@ -665,6 +1086,16 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          categoria?: string | null
+          transato_min?: number | null
+          transato_max?: number | null
+          commissione?: number | null
+          target_cliente?: string | null
+          note?: string | null
+          testo_estratto?: string | null
+          nome_file?: string | null
+          versione?: number
+          sostituisce_id?: string | null
           brand: Database["public"]["Enums"]["brand"]
           canone?: number | null
           created_at?: string
@@ -679,6 +1110,16 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          categoria?: string | null
+          transato_min?: number | null
+          transato_max?: number | null
+          commissione?: number | null
+          target_cliente?: string | null
+          note?: string | null
+          testo_estratto?: string | null
+          nome_file?: string | null
+          versione?: number
+          sostituisce_id?: string | null
           brand?: Database["public"]["Enums"]["brand"]
           canone?: number | null
           created_at?: string
@@ -777,6 +1218,9 @@ export type Database = {
       }
       ruoli_contatto: {
         Row: {
+          colore_bg: string | null
+          colore_fg: string | null
+          colore_dot: string | null
           attivo: boolean
           created_at: string
           id: string
@@ -786,6 +1230,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          colore_bg?: string | null
+          colore_fg?: string | null
+          colore_dot?: string | null
           attivo?: boolean
           created_at?: string
           id?: string
@@ -795,6 +1242,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          colore_bg?: string | null
+          colore_fg?: string | null
+          colore_dot?: string | null
           attivo?: boolean
           created_at?: string
           id?: string
@@ -807,6 +1257,8 @@ export type Database = {
       }
       sedi: {
         Row: {
+          principale: boolean
+          consegna_pos: boolean
           cap: string | null
           civico: string | null
           comune: string | null
@@ -823,6 +1275,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          principale?: boolean
+          consegna_pos?: boolean
           cap?: string | null
           civico?: string | null
           comune?: string | null
@@ -839,6 +1293,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          principale?: boolean
+          consegna_pos?: boolean
           cap?: string | null
           civico?: string | null
           comune?: string | null
@@ -873,6 +1329,10 @@ export type Database = {
       }
       sedi_pos: {
         Row: {
+          quantita: number
+          esigenza_id: string | null
+          differenzia_pagamenti: boolean | null
+          amex: boolean | null
           created_at: string
           iban: string | null
           id: string
@@ -884,6 +1344,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          quantita?: number
+          esigenza_id?: string | null
+          differenzia_pagamenti?: boolean | null
+          amex?: boolean | null
           created_at?: string
           iban?: string | null
           id?: string
@@ -895,6 +1359,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          quantita?: number
+          esigenza_id?: string | null
+          differenzia_pagamenti?: boolean | null
+          amex?: boolean | null
           created_at?: string
           iban?: string | null
           id?: string
@@ -924,6 +1392,9 @@ export type Database = {
       }
       tipi_pos: {
         Row: {
+          colore_bg: string | null
+          colore_fg: string | null
+          colore_dot: string | null
           attivo: boolean
           created_at: string
           id: string
@@ -934,6 +1405,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          colore_bg?: string | null
+          colore_fg?: string | null
+          colore_dot?: string | null
           attivo?: boolean
           created_at?: string
           id?: string
@@ -944,6 +1418,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          colore_bg?: string | null
+          colore_fg?: string | null
+          colore_dot?: string | null
           attivo?: boolean
           created_at?: string
           id?: string
@@ -1056,6 +1533,7 @@ export type Database = {
       }
     }
     Enums: {
+      tipo_campo: "testo" | "numero" | "si_no" | "tendina" | "data"
       brand: "NEXI" | "HERA_COMM"
       fonte_lead: "import_excel" | "self_gen" | "call_center_nexi"
       merge_mode: "sovrascrivi" | "lascia" | "integra"
