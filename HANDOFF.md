@@ -1,8 +1,8 @@
 # AgentPro CRM — Handoff
 
-Last updated: 2026-07-28 — **all 8 milestones built and committed**, plus the four
-§4/§5 reconciliation-polish items. Remaining work is §3 dashboard completeness,
-§15 iPad layout, and real-device verification.
+Last updated: 2026-07-29 — all 8 milestones, the §4/§5 polish, **and the port of
+the legacy CRM 3.0 feature set**. Remaining work: apply migrations 17–25 (blocked
+on credentials), migrate the 160 real leads, real-device verification.
 
 ---
 
@@ -131,6 +131,11 @@ an import (§8).
 + Planning are shared with NEXI. No energy/fotovoltaico fields until Paco supplies
 them. A generic multi-company configurator was explicitly **rejected** (§14).
 
+> **Superseded 2026-07-29.** The configurator was built after all, because the
+> CRM 3.0 had it (`campi_config`) and the user asked for the whole 3.0 feature
+> set. It is now the way to add Hera-specific questions without a migration.
+> The rest of this decision stands.
+
 **Testing** — Vitest on logic only (target banding, slot suggestion + overlap,
 merge modes, mail parser, report aggregations). No component/E2E tests.
 
@@ -144,8 +149,8 @@ tree clean as of this writing).
 ### Verification run at handoff time
 
 ```
-npm run build   ✓  (tsc -b + vite build clean; 1,047 kB / 318 kB gzip)
-npm run test    ✓  79 tests, 9 files, all pass
+npm run build   ✓  (tsc -b + vite build clean; 1,125 kB / 338 kB gzip)
+npm run test    ✓  141 tests, 14 files, all pass
 npm run lint    ✓  oxlint clean
 ```
 
@@ -159,7 +164,83 @@ npm run lint    ✓  oxlint clean
 means "typechecks, builds, and its data path was exercised via psql/PostgREST" —
 **not** "was seen rendered". This is the single largest gap.
 
+### Port of the legacy CRM 3.0 (2026-07-29)
+
+The user supplied `AgentPro_CRM_3.0 copia/` — the Express + SQLite + single-file
+React app Paco used before this build — and asked for **all** of its features to
+be carried over. It is a 2,610-line server, a 1,613-line SPA and a 184 KB SQLite
+database with **real data** (160 leads).
+
+That folder is **gitignored**: it is a reference, not part of this build.
+
+**Ported:**
+
+| Legacy | Here |
+|---|---|
+| `agente` + `mandati` | `profilo_agente` + `mandati`, Config → Agente & Mandati |
+| ~30-question NEXI interview | `lead_nexi` extended, 6-tab `PannelloNexi` |
+| `verify_state` + colours | `stati_verifica` vocabulary, `SelettoreVerifica` |
+| `opzioni_custom` colours | `colore_bg/fg/dot` on every vocabulary |
+| `aree_custom` (by comune) | `zone_comune`; CAP wins, comune is the fallback |
+| `indirizzi` (principale, consegna POS) | `sedi.principale` / `sedi.consegna_pos` |
+| `pos_richiesti` | `sedi_pos` + quantita / esigenza / differenzia / amex |
+| offer catalogue + matching engine | `offerte` extended, `ordinaPerTransato` |
+| `campi_config` / `campi_valori` | same, + editor and per-lead panel |
+| weekly planning grid | `SettimanaPage` |
+| .ics / Google Cal / mail / WA / TG | `lib/condivisione.ts` (pure, tested) |
+| backup / restore | `features/backup` |
+| paste-an-address + Photon autocomplete | `lib/indirizzo.ts` + `RiconosciIndirizzo` |
+| sortable, filtered lead table | `LeadListPage` + `filtri.ts` (pure, tested) |
+| dashboard KPI + clickable tiles | `DashboardPage` |
+| Aree panel | `AreePage` |
+
+**Deliberately NOT ported, with the reason:**
+
+- **Field Report** — the offline HTML export, worked on an iPad, then re-imported
+  as a JSON of the day's updates. It existed because the 3.0 server was LAN-only
+  and the iPad could not reach it. This build is a cloud PWA reachable from any
+  device with a connection, so the export/re-import shuttle has no job to do, and
+  keeping it would mean maintaining a second divergent copy of every form.
+  *If Paco really does work with no signal*, the right answer is offline-first
+  caching in the PWA, not the file shuttle. Not built — flagged as a decision,
+  not an oversight.
+- **Server-side PDF (pdfmake)** — replaced by the browser's print-to-PDF. pdfmake
+  is ~1 MB on a bundle already over 1 MB, for a worse result than the OS gives.
+- **Auto-extraction from the uploaded PDF (`pdf-parse`)** — the extraction
+  *logic* is ported and tested (`offerte/estrazione.ts`); it runs on text pasted
+  from the PDF. Reading the PDF in-browser needs `pdfjs-dist` (~300 KB); worth a
+  dynamic import later if pasting proves annoying.
+- **The 7 hand-set lead states** (Da contattare / Chiamato / Appuntamento /
+  Chiuso / Perso / Richiamare / non più attiva). This build **derives** 4 states
+  from lavorazioni, and that was a deliberate interviewed decision: hand-set
+  states drift out of sync with the work log. The legacy value is preserved in
+  the lead's note by the migration script, so nothing is lost.
+- **Generic multi-company configurator was previously rejected (§14)** but is
+  now built (`campi_config`), because the 3.0 had it and the user asked for
+  everything. Noted here so the contradiction is visible rather than silent.
+
+### Migrating the real data — NOT YET RUN
+
+`AgentPro_CRM_3.0 copia/data/crm.db` holds **160 leads**, 11 lavorazioni,
+9 appuntamenti, 8 contatti, 9 aree, 2 mandati and 1 agent profile.
+
+```bash
+python3 scripts/migra-crm3.py "AgentPro_CRM_3.0 copia/data/crm.db" > migrazione.json
+# then in the app: Configurazione → Backup → Scegli file .json → Ripristina
+```
+
+It emits the app's own backup format, so the restore goes through RLS with the
+real user's JWT — no service key in a script — and the JSON can be inspected
+before it touches anything. Ids are `uuid5` of the legacy id, so re-running
+updates instead of duplicating. Verified to convert cleanly: 160/160 leads.
+
+Stated losses (all in the script header): `lavorazioni.esito_id` and contact
+roles stay NULL, because those are per-user vocabularies with generated ids and
+guessing the mapping would invent data — the legacy text is preserved in the
+notes instead. Attachments are files on disk, not rows, so they do not migrate.
+
 ### Milestone status
+
 
 | # | Milestone | State |
 |---|---|---|
