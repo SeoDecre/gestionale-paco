@@ -4,17 +4,20 @@ import { Bottone } from '@/components/ui/Bottone'
 import { Input, Select } from '@/components/ui/Campo'
 import { Pillola } from '@/components/ui/Pillola'
 import { Caricamento, Errore, Vuoto } from '@/components/ui/Stato'
+import { RiconosciIndirizzo } from '@/components/ui/RiconosciIndirizzo'
 import { ibanValido } from '@/lib/validazione'
 import { indirizzoCompleto } from '@/lib/maps'
+import type { IndirizzoAnalizzato } from '@/lib/indirizzo'
 import type { SedeConPos, PosConTipo } from '../api'
 import {
   useSedi,
   useCreaSede,
+  useAggiornaSede,
   useEliminaSede,
   useCreaPos,
   useEliminaPos,
 } from '../queries'
-import { useEtichetteSede, useTipiPos } from '@/features/vocabolari/queries'
+import { useEtichetteSede, useTipiPos, useEsigenzePos } from '@/features/vocabolari/queries'
 import { ContatorePos } from './ContatorePos'
 
 const MAX_SEDI = 4
@@ -59,11 +62,16 @@ export function PannelloSedi({ leadId }: { leadId: string }) {
 
 function SchedaSede({ leadId, sede }: { leadId: string; sede: SedeConPos }) {
   const elimina = useEliminaSede(leadId)
+  const aggiorna = useAggiornaSede(leadId)
   const [aggiungiPos, setAggiungiPos] = useState(false)
   const indirizzo = indirizzoCompleto(sede)
 
   return (
-    <div className="rounded-card border border-bordo p-3">
+    <div
+      className={`rounded-card border p-3 ${
+        sede.principale ? 'border-info-soft-border bg-info-soft/30' : 'border-bordo'
+      }`}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-campo font-medium">
@@ -82,6 +90,32 @@ function SchedaSede({ leadId, sede }: { leadId: string; sede: SedeConPos }) {
         >
           ✕
         </button>
+      </div>
+
+      {/* Principale = quella per mappa e corrispondenza; consegna POS = dove
+          arriva materialmente il terminale. Non coincidono sempre, ed è
+          l'informazione che fa sbagliare le consegne quando manca (§ 3.0). */}
+      <div className="mt-2 flex flex-wrap gap-3">
+        <label className="flex items-center gap-1.5 text-etichetta text-testo-debole">
+          <input
+            type="radio"
+            name={`principale-${sede.lead_id}`}
+            checked={sede.principale}
+            onChange={() => aggiorna.mutate({ id: sede.id, patch: { principale: true } })}
+          />
+          Principale
+        </label>
+        <label className="flex items-center gap-1.5 text-etichetta text-testo-debole">
+          <input
+            type="checkbox"
+            checked={sede.consegna_pos}
+            onChange={(e) =>
+              aggiorna.mutate({ id: sede.id, patch: { consegna_pos: e.target.checked } })
+            }
+          />
+          Consegna POS
+        </label>
+        {sede.consegna_pos && <Pillola tinta="avviso">📦 Consegna qui</Pillola>}
       </div>
 
       {/* Censimento POS della sede (§5) */}
@@ -107,11 +141,28 @@ function SchedaSede({ leadId, sede }: { leadId: string; sede: SedeConPos }) {
 
 function RigaPos({ leadId, pos }: { leadId: string; pos: PosConTipo }) {
   const elimina = useEliminaPos(leadId)
+  const esigenze = useEsigenzePos()
+  const esigenza = esigenze.data?.find((e) => e.id === pos.esigenza_id)
+
+  const dettagli = [
+    pos.iban,
+    pos.seriale,
+    esigenza?.nome,
+    pos.differenzia_pagamenti ? 'pagamenti differenziati' : null,
+    pos.amex ? 'Amex' : null,
+    pos.note,
+  ].filter(Boolean)
+
   return (
-    <li className="flex items-center justify-between gap-2 text-etichetta">
-      <span>
-        <Pillola tinta="pericolo">{pos.tipi_pos?.nome ?? 'POS'}</Pillola>
-        {pos.iban && <span className="ml-2 text-testo-debole">{pos.iban}</span>}
+    <li className="flex items-start justify-between gap-2 text-etichetta">
+      <span className="min-w-0">
+        <span className="flex flex-wrap items-center gap-1.5">
+          <Pillola tinta="pericolo">{pos.tipi_pos?.nome ?? 'POS'}</Pillola>
+          {pos.quantita > 1 && <span className="font-medium">×{pos.quantita}</span>}
+        </span>
+        {dettagli.length > 0 && (
+          <span className="mt-0.5 block text-testo-debole">{dettagli.join(' · ')}</span>
+        )}
       </span>
       <button
         aria-label="Elimina POS"
@@ -135,6 +186,16 @@ function FormSede({ leadId, onFatto }: { leadId: string; onFatto: () => void }) 
   const [cap, setCap] = useState('')
   const [comune, setComune] = useState('')
   const [provincia, setProvincia] = useState('')
+  const [consegnaPos, setConsegnaPos] = useState(false)
+
+  /** Riempie i campi da "incolla e riconosci" / autocompletamento. */
+  function applica(a: IndirizzoAnalizzato) {
+    if (a.indirizzo) setIndirizzo(a.indirizzo)
+    if (a.civico) setCivico(a.civico)
+    if (a.cap) setCap(a.cap)
+    if (a.comune) setComune(a.comune)
+    if (a.provincia) setProvincia(a.provincia)
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -147,6 +208,7 @@ function FormSede({ leadId, onFatto }: { leadId: string; onFatto: () => void }) 
       cap: cap.trim() || null,
       comune: comune.trim() || null,
       provincia: provincia.trim() || null,
+      consegna_pos: consegnaPos,
     })
     onFatto()
   }
@@ -166,6 +228,9 @@ function FormSede({ leadId, onFatto }: { leadId: string; onFatto: () => void }) 
           </option>
         ))}
       </Select>
+
+      <RiconosciIndirizzo onApplica={applica} />
+
       <div className="flex gap-2">
         <Input placeholder="Indirizzo" value={indirizzo} onChange={(e) => setIndirizzo(e.target.value)} />
         <Input placeholder="Civico" className="w-24" value={civico} onChange={(e) => setCivico(e.target.value)} />
@@ -181,6 +246,14 @@ function FormSede({ leadId, onFatto }: { leadId: string; onFatto: () => void }) 
           onChange={(e) => setProvincia(e.target.value.toUpperCase())}
         />
       </div>
+      <label className="flex items-center gap-2 text-etichetta text-testo-debole">
+        <input
+          type="checkbox"
+          checked={consegnaPos}
+          onChange={(e) => setConsegnaPos(e.target.checked)}
+        />
+        Qui va consegnato il POS
+      </label>
       {crea.isError && <Errore errore={crea.error} />}
       <Bottone type="submit" disabled={crea.isPending}>
         {crea.isPending ? 'Salvataggio…' : 'Aggiungi sede'}
@@ -200,36 +273,73 @@ function FormPos({
 }) {
   const crea = useCreaPos(leadId)
   const tipi = useTipiPos()
+  const esigenze = useEsigenzePos()
   const [tipoId, setTipoId] = useState('')
   const [iban, setIban] = useState('')
   const [seriale, setSeriale] = useState('')
+  const [quantita, setQuantita] = useState('1')
+  const [esigenzaId, setEsigenzaId] = useState('')
+  const [differenzia, setDifferenzia] = useState(false)
+  const [amex, setAmex] = useState(false)
+  const [note, setNote] = useState('')
 
   const tipo = tipi.data?.find((t) => t.id === tipoId)
   const chiedeIban = tipo?.richiede_iban ?? false
   const ibanOk = ibanValido(iban)
+  const q = Number(quantita)
+  const quantitaOk = Number.isInteger(q) && q >= 1 && q <= 99
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     if (chiedeIban && !ibanOk) return
+    if (!quantitaOk) return
     await crea.mutateAsync({
       sede_id: sedeId,
       tipo_pos_id: tipoId || null,
       iban: chiedeIban ? iban.trim().toUpperCase() || null : null,
       seriale: seriale.trim() || null,
+      quantita: q,
+      esigenza_id: esigenzaId || null,
+      differenzia_pagamenti: differenzia,
+      amex,
+      note: note.trim() || null,
     })
     onFatto()
   }
 
   return (
     <form onSubmit={onSubmit} className="mt-2 flex flex-col gap-2 rounded-card bg-sfondo p-3">
-      <Select value={tipoId} onChange={(e) => setTipoId(e.target.value)}>
-        <option value="">— tipo POS —</option>
-        {(tipi.data ?? []).map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.nome}
+      <div className="flex gap-2">
+        <Select value={tipoId} onChange={(e) => setTipoId(e.target.value)}>
+          <option value="">— tipo POS —</option>
+          {(tipi.data ?? []).map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.nome}
+            </option>
+          ))}
+        </Select>
+        <Input
+          className="w-20"
+          inputMode="numeric"
+          aria-label="Quantità"
+          placeholder="Qtà"
+          value={quantita}
+          onChange={(e) => setQuantita(e.target.value)}
+        />
+      </div>
+      {!quantitaOk && (
+        <p className="text-etichetta text-danger-soft-text">La quantità va da 1 a 99.</p>
+      )}
+
+      <Select value={esigenzaId} onChange={(e) => setEsigenzaId(e.target.value)}>
+        <option value="">— esigenza —</option>
+        {(esigenze.data ?? []).map((es) => (
+          <option key={es.id} value={es.id}>
+            {es.nome}
           </option>
         ))}
       </Select>
+
       {chiedeIban && (
         <Input
           placeholder="IBAN"
@@ -241,8 +351,29 @@ function FormPos({
         <p className="text-etichetta text-danger-soft-text">IBAN non valido.</p>
       )}
       <Input placeholder="Seriale (opz.)" value={seriale} onChange={(e) => setSeriale(e.target.value)} />
+
+      <div className="flex flex-wrap gap-3">
+        <label className="flex items-center gap-1.5 text-etichetta text-testo-debole">
+          <input
+            type="checkbox"
+            checked={differenzia}
+            onChange={(e) => setDifferenzia(e.target.checked)}
+          />
+          Pagamenti differenziati
+        </label>
+        <label className="flex items-center gap-1.5 text-etichetta text-testo-debole">
+          <input type="checkbox" checked={amex} onChange={(e) => setAmex(e.target.checked)} />
+          Amex
+        </label>
+      </div>
+
+      <Input placeholder="Note (opz.)" value={note} onChange={(e) => setNote(e.target.value)} />
+
       {crea.isError && <Errore errore={crea.error} />}
-      <Bottone type="submit" disabled={crea.isPending || (chiedeIban && !!iban && !ibanOk)}>
+      <Bottone
+        type="submit"
+        disabled={crea.isPending || !quantitaOk || (chiedeIban && !!iban && !ibanOk)}
+      >
         {crea.isPending ? 'Salvataggio…' : 'Aggiungi POS'}
       </Bottone>
     </form>

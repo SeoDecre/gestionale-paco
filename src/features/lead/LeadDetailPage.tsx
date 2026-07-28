@@ -6,6 +6,7 @@ import { AnagraficaScheda } from './components/AnagraficaScheda'
 import { PannelloContatti } from './components/PannelloContatti'
 import { PannelloSedi } from './components/PannelloSedi'
 import { PannelloConcorrenti } from './components/PannelloConcorrenti'
+import { PannelloEsigenze } from './components/PannelloEsigenze'
 import { PannelloAllegati } from './components/PannelloAllegati'
 import { PannelloLavorazioni } from '@/features/lavorazioni/PannelloLavorazioni'
 import { PannelloNexi } from '@/features/nexi/PannelloNexi'
@@ -46,6 +47,7 @@ export function LeadDetailPage() {
           <PannelloContatti leadId={id} brand={lead.data.lead_brand[0]?.brand} />
           <PannelloSedi leadId={id} />
           <PannelloConcorrenti leadId={id} />
+          <PannelloEsigenze leadId={id} />
           {lead.data.lead_brand.some((b) => b.brand === 'NEXI') && <PannelloNexi leadId={id} />}
           {/* Domande extra configurate per brand (CRM 3.0): una scheda per
               ogni brand del lead, e nulla se non è stato configurato niente. */}

@@ -7,6 +7,8 @@ import { useBozza } from '@/lib/useBozza'
 import { pivaValida, capValido, provinciaValida, emailValida } from '@/lib/validazione'
 import { formattaEuro } from '@/lib/format'
 import { urlGoogleAttivita, urlFacebookAttivita, urlGooglePiva } from '@/lib/ricerche'
+import { RiconosciIndirizzo } from '@/components/ui/RiconosciIndirizzo'
+import type { IndirizzoAnalizzato } from '@/lib/indirizzo'
 import type { Enum, Riga } from '@/types/db'
 import type { LeadConBrand } from '../api'
 import { useAggiornaLead } from '../queries'
@@ -92,6 +94,15 @@ export function AnagraficaScheda({ lead }: { lead: LeadConBrand }) {
   const numero = (v: string): number | null => {
     const n = Number(v.replace(',', '.'))
     return v.trim() === '' || Number.isNaN(n) ? null : n
+  }
+
+  /** Riempie i campi indirizzo dal riconoscimento, senza toccare gli altri. */
+  function applicaIndirizzo(a: IndirizzoAnalizzato) {
+    if (a.indirizzo) imposta('indirizzo', a.indirizzo)
+    if (a.civico) imposta('civico', a.civico)
+    if (a.cap) imposta('cap', a.cap)
+    if (a.comune) imposta('comune', a.comune)
+    if (a.provincia) imposta('provincia', a.provincia)
   }
 
   // §4 "Verifica dati online". Ricerche costruite sul nome che si sta
@@ -217,6 +228,11 @@ export function AnagraficaScheda({ lead }: { lead: LeadConBrand }) {
             />
           )}
         </Campo>
+
+        {/* Incolla-e-riconosci + autocompletamento OSM (CRM 3.0). */}
+        <div className="sm:col-span-2">
+          <RiconosciIndirizzo onApplica={applicaIndirizzo} />
+        </div>
 
         <Campo etichetta="Indirizzo">
           {(id) => (

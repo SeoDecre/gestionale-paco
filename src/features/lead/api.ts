@@ -270,3 +270,30 @@ export async function eliminaAllegato(id: string): Promise<void> {
   const { error } = await supabase.from('allegati').delete().eq('id', id)
   if (error) throw error
 }
+
+// ------------------------------------------------------------ lead_esigenze
+// Esigenze POS a livello AZIENDA (come i concorrenti, §4: non per sede).
+export async function listaEsigenzeLead(leadId: string): Promise<Riga<'lead_esigenze'>[]> {
+  const { data, error } = await supabase
+    .from('lead_esigenze')
+    .select('*')
+    .eq('lead_id', leadId)
+  if (error) throw error
+  return data ?? []
+}
+
+export async function aggiungiEsigenza(leadId: string, esigenzaId: string): Promise<void> {
+  const { error } = await supabase
+    .from('lead_esigenze')
+    .insert({ lead_id: leadId, esigenza_id: esigenzaId, owner_id: await ownerId() })
+  if (error) throw error
+}
+
+export async function rimuoviEsigenza(leadId: string, esigenzaId: string): Promise<void> {
+  const { error } = await supabase
+    .from('lead_esigenze')
+    .delete()
+    .eq('lead_id', leadId)
+    .eq('esigenza_id', esigenzaId)
+  if (error) throw error
+}

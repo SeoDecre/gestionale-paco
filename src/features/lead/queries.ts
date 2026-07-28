@@ -11,6 +11,7 @@ export const chiaviLead = {
   sedi: (leadId: string) => ['lead', leadId, 'sedi'] as const,
   concorrenti: (leadId: string) => ['lead', leadId, 'concorrenti'] as const,
   allegati: (leadId: string) => ['lead', leadId, 'allegati'] as const,
+  esigenze: (leadId: string) => ['lead', leadId, 'esigenze'] as const,
 }
 
 // ------------------------------------------------------------------- queries
@@ -109,6 +110,10 @@ export const useImpostaPrincipale = (leadId: string) =>
 // sedi + pos (condividono la chiave 'sedi': i pos sono annidati nelle sedi)
 export const useCreaSede = (leadId: string) =>
   useMutazioneLead(chiaviLead.sedi(leadId), api.creaSede)
+export const useAggiornaSede = (leadId: string) =>
+  useMutazioneLead(chiaviLead.sedi(leadId), (v: { id: string; patch: api.PatchSede }) =>
+    api.aggiornaSede(v.id, v.patch),
+  )
 export const useEliminaSede = (leadId: string) =>
   useMutazioneLead(chiaviLead.sedi(leadId), api.eliminaSede)
 export const useCreaPos = (leadId: string) =>
@@ -128,6 +133,18 @@ export const useAggiungiConcorrente = (leadId: string) =>
 export const useRimuoviConcorrente = (leadId: string) =>
   useMutazioneLead(chiaviLead.concorrenti(leadId), (concorrenteId: string) =>
     api.rimuoviConcorrente(leadId, concorrenteId),
+  )
+
+// esigenze POS a livello azienda
+export const useEsigenzeLead = (leadId: string) =>
+  useQuery({ queryKey: chiaviLead.esigenze(leadId), queryFn: () => api.listaEsigenzeLead(leadId) })
+export const useAggiungiEsigenza = (leadId: string) =>
+  useMutazioneLead(chiaviLead.esigenze(leadId), (esigenzaId: string) =>
+    api.aggiungiEsigenza(leadId, esigenzaId),
+  )
+export const useRimuoviEsigenza = (leadId: string) =>
+  useMutazioneLead(chiaviLead.esigenze(leadId), (esigenzaId: string) =>
+    api.rimuoviEsigenza(leadId, esigenzaId),
   )
 
 // allegati

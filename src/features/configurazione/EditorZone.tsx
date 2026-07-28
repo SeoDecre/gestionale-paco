@@ -11,6 +11,9 @@ import {
   useAggiornaVoce,
   useEliminaVoce,
   useCapDiZona,
+  useComuniDiZona,
+  useCreaComuneZona,
+  useEliminaComuneZona,
   useCreaCap,
   useEliminaCap,
 } from '@/features/vocabolari/queries'
@@ -81,7 +84,12 @@ function RigaZona({ zona }: { zona: Zona }) {
           ✕
         </button>
       </div>
-      {aperto && <ElencoCap zonaId={zona.id} />}
+      {aperto && (
+        <>
+          <ElencoCap zonaId={zona.id} />
+          <ElencoComuni zonaId={zona.id} />
+        </>
+      )}
     </div>
   )
 }
@@ -139,6 +147,65 @@ function ElencoCap({ zonaId }: { zonaId: string }) {
         </Bottone>
       </form>
       {crea.isError && <div className="mt-1"><Errore errore={crea.error} /></div>}
+    </div>
+  )
+}
+
+/**
+ * Comuni della zona (dal CRM 3.0, che mappava le aree per nome di comune).
+ * Convive con i CAP: il CAP e' piu' specifico e vince, il comune fa da
+ * ripiego per chi non vuole censire venti CAP uno per uno (migrazione 19).
+ */
+function ElencoComuni({ zonaId }: { zonaId: string }) {
+  const comuni = useComuniDiZona(zonaId)
+  const crea = useCreaComuneZona(zonaId)
+  const elimina = useEliminaComuneZona(zonaId)
+  const [nuovo, setNuovo] = useState('')
+
+  async function aggiungi(e: FormEvent) {
+    e.preventDefault()
+    if (!nuovo.trim()) return
+    await crea.mutateAsync(nuovo.trim())
+    setNuovo('')
+  }
+
+  return (
+    <div className="mt-2 border-t border-bordo pt-2">
+      <p className="mb-1 text-etichetta text-testo-debole">
+        Comuni interi (ripiego quando il CAP non e' mappato)
+      </p>
+      <div className="mb-2 flex flex-wrap gap-1.5">
+        {comuni.data?.map((c) => (
+          <span key={c.id} className="inline-flex items-center gap-1">
+            <Pillola tinta="info">{c.comune}</Pillola>
+            <button
+              aria-label="Rimuovi comune"
+              className="text-danger-soft-text"
+              onClick={() => elimina.mutate(c.id)}
+            >
+              ✕
+            </button>
+          </span>
+        ))}
+        {comuni.data && comuni.data.length === 0 && (
+          <span className="text-etichetta text-testo-debole">Nessun comune.</span>
+        )}
+      </div>
+      <form onSubmit={aggiungi} className="flex gap-2">
+        <Input
+          placeholder="Comune (es. LIVORNO)"
+          value={nuovo}
+          onChange={(e) => setNuovo(e.target.value)}
+        />
+        <Bottone type="submit" disabled={crea.isPending || !nuovo.trim()}>
+          ＋
+        </Bottone>
+      </form>
+      {crea.isError && (
+        <div className="mt-1">
+          <Errore errore={crea.error} />
+        </div>
+      )}
     </div>
   )
 }
