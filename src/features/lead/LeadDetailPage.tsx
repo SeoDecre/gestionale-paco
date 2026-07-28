@@ -9,6 +9,7 @@ import { PannelloConcorrenti } from './components/PannelloConcorrenti'
 import { PannelloAllegati } from './components/PannelloAllegati'
 import { PannelloLavorazioni } from '@/features/lavorazioni/PannelloLavorazioni'
 import { PannelloNexi } from '@/features/nexi/PannelloNexi'
+import { PannelloCampi } from '@/features/campi/PannelloCampi'
 
 export function LeadDetailPage() {
   const { id = '' } = useParams()
@@ -46,6 +47,11 @@ export function LeadDetailPage() {
           <PannelloSedi leadId={id} />
           <PannelloConcorrenti leadId={id} />
           {lead.data.lead_brand.some((b) => b.brand === 'NEXI') && <PannelloNexi leadId={id} />}
+          {/* Domande extra configurate per brand (CRM 3.0): una scheda per
+              ogni brand del lead, e nulla se non è stato configurato niente. */}
+          {lead.data.lead_brand.map((b) => (
+            <PannelloCampi key={b.brand} leadId={id} brand={b.brand} />
+          ))}
           <PannelloAllegati leadId={id} />
 
           <button

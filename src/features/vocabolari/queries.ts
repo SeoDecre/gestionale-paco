@@ -57,6 +57,20 @@ export const useAzioniSuccessive = () =>
     ...OPZIONI,
   })
 
+export const useEsigenzePos = () =>
+  useQuery({
+    queryKey: chiaviVocabolari.tabella('esigenze_pos'),
+    queryFn: api.listaEsigenzePos,
+    ...OPZIONI,
+  })
+
+export const useStatiVerifica = () =>
+  useQuery({
+    queryKey: chiaviVocabolari.tabella('stati_verifica'),
+    queryFn: api.listaStatiVerifica,
+    ...OPZIONI,
+  })
+
 export const useZone = () =>
   useQuery({
     queryKey: chiaviVocabolari.tabella('zone'),
@@ -128,3 +142,22 @@ export const useCreaCap = (zonaId: string) =>
   )
 export const useEliminaCap = (zonaId: string) =>
   useMutazioneCap(zonaId, (id: string) => api.eliminaCap(id))
+
+// ----------------------------------------------------------------- zone_comune
+export const chiaveComuniZona = (zonaId: string) => ['zone_comune', zonaId] as const
+
+export const useComuniDiZona = (zonaId: string) =>
+  useQuery({ queryKey: chiaveComuniZona(zonaId), queryFn: () => api.comuniDiZona(zonaId) })
+
+function useMutazioneComune(zonaId: string, fn: (v: never) => Promise<void>) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: fn as (v: unknown) => Promise<void>,
+    onSuccess: () => qc.invalidateQueries({ queryKey: chiaveComuniZona(zonaId) }),
+  })
+}
+
+export const useCreaComuneZona = (zonaId: string) =>
+  useMutazioneComune(zonaId, (comune: string) => api.creaComuneZona(zonaId, comune))
+export const useEliminaComuneZona = (zonaId: string) =>
+  useMutazioneComune(zonaId, (id: string) => api.eliminaComuneZona(id))

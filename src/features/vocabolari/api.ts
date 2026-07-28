@@ -2,7 +2,10 @@ import { supabase } from '@/lib/supabase'
 import { ownerId } from '@/lib/sessione'
 import type { Aggiornamento, Riga } from '@/types/db'
 
-/** Le sette tabelle-vocabolario gestibili dall'utente (§9). */
+/**
+ * Le tabelle-vocabolario gestibili dall'utente (§9 + porting CRM 3.0).
+ * `stati_verifica` ed `esigenze_pos` arrivano dal 3.0 (migrazione 18).
+ */
 export type TabellaVocab =
   | 'ruoli_contatto'
   | 'etichette_sede'
@@ -10,6 +13,8 @@ export type TabellaVocab =
   | 'concorrenti_pos'
   | 'tipi_pos'
   | 'esiti_lavorazione'
+  | 'esigenze_pos'
+  | 'stati_verifica'
   | 'zone'
 
 /**
@@ -21,16 +26,7 @@ export type TabellaVocab =
  * ha ordinate l'utente (campo `ordine`, poi nome).
  */
 
-async function attivi<T>(
-  tabella:
-    | 'ruoli_contatto'
-    | 'etichette_sede'
-    | 'concorrenti_pos'
-    | 'tipi_pos'
-    | 'esiti_lavorazione'
-    | 'azioni_successive'
-    | 'zone',
-): Promise<T[]> {
+async function attivi<T>(tabella: TabellaVocab): Promise<T[]> {
   const { data, error } = await supabase
     .from(tabella)
     .select('*')
@@ -48,6 +44,8 @@ export const listaTipiPos = () => attivi<Riga<'tipi_pos'>>('tipi_pos')
 export const listaEsiti = () => attivi<Riga<'esiti_lavorazione'>>('esiti_lavorazione')
 export const listaAzioniSuccessive = () =>
   attivi<Riga<'azioni_successive'>>('azioni_successive')
+export const listaEsigenzePos = () => attivi<Riga<'esigenze_pos'>>('esigenze_pos')
+export const listaStatiVerifica = () => attivi<Riga<'stati_verifica'>>('stati_verifica')
 export const listaZone = () => attivi<Riga<'zone'>>('zone')
 
 export async function listaParametriTarget(): Promise<Riga<'parametri_target'>[]> {
@@ -131,5 +129,30 @@ export async function creaCap(
 
 export async function eliminaCap(id: string): Promise<void> {
   const { error } = await supabase.from('zone_cap').delete().eq('id', id)
+  if (error) throw error
+}
+
+// --------------------------------------------------------------- zone_comune
+// Portato dal CRM 3.0, che mappava le aree per nome di comune invece che per
+// CAP. I due meccanismi convivono: il CAP vince, il comune fa da ripiego (19).
+export async function comuniDiZona(zonaId: string): Promise<Riga<'zone_comune'>[]> {
+  const { data, error } = await supabase
+    .from('zone_comune')
+    .select('*')
+    .eq('zona_id', zonaId)
+    .order('comune')
+  if (error) throw error
+  return data ?? []
+}
+
+export async function creaComuneZona(zonaId: string, comune: string): Promise<void> {
+  const { error } = await supabase
+    .from('zone_comune')
+    .insert({ zona_id: zonaId, comune, owner_id: await ownerId() })
+  if (error) throw error
+}
+
+export async function eliminaComuneZona(id: string): Promise<void> {
+  const { error } = await supabase.from('zone_comune').delete().eq('id', id)
   if (error) throw error
 }
