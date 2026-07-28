@@ -38,3 +38,6 @@ supabase/.branches
 # Vecchio prototipo Express/SQLite copiato qui a mano: non fa parte di questo
 # build (greenfield, vedi HANDOFF). Fuori da git e fuori dal lint.
 AgentPro_CRM_3.0*/
+
+# Export della migrazione CRM 3.0: contiene dati cliente (PII)
+migrazione.json
