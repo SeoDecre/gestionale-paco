@@ -17,6 +17,7 @@ import { useOfferte } from '@/features/offerte/queries'
 import { BottonePdfOfferta } from '@/features/offerte/BottonePdfOfferta'
 import { BADGE_BRAND } from '../brand'
 import { dividiPerTarget } from '../offerta'
+import { ordinaPerTransato } from '@/features/offerte/estrazione'
 import { suggerisciTarget } from '../target'
 
 type CampiAnagrafica = Pick<
@@ -123,7 +124,14 @@ export function AnagraficaScheda({ lead }: { lead: LeadConBrand }) {
       (o.stato === 'attiva' || o.id === bozza.offerta_consigliata_id) &&
       (brandLead.size === 0 || brandLead.has(o.brand)),
   )
-  const { consigliate, altre } = dividiPerTarget(scegliibili, bozza.target)
+  const divise = dividiPerTarget(scegliibili, bozza.target)
+  // Dentro il gruppo "adatte al target", il motore di matching del 3.0 mette
+  // per prima quella la cui fascia di transato contiene davvero il cliente.
+  // Il transato e' ANNUO: il lead memorizza il mensile (§4).
+  const transatoAnnuo =
+    bozza.fatturato_mensile != null ? bozza.fatturato_mensile * 12 : null
+  const consigliate = ordinaPerTransato(divise.consigliate, transatoAnnuo).map((x) => x.offerta)
+  const altre = divise.altre
   const offertaScelta = scegliibili.find((o) => o.id === bozza.offerta_consigliata_id)
   const etichettaOfferta = (o: Riga<'offerte'>) =>
     `${BADGE_BRAND[o.brand].etichetta} · ${o.nome}` +
