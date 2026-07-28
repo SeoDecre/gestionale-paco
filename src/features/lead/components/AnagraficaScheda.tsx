@@ -29,6 +29,14 @@ type CampiAnagrafica = Pick<
   | 'cap'
   | 'comune'
   | 'provincia'
+  | 'telefono'
+  | 'cellulare'
+  | 'pec'
+  | 'forma_giuridica'
+  | 'mcc'
+  | 'psp_attuale'
+  | 'orari'
+  | 'n_punti_vendita'
   | 'fatturato_mensile'
   | 'target'
   | 'zona_manuale'
@@ -56,6 +64,14 @@ export function AnagraficaScheda({ lead }: { lead: LeadConBrand }) {
     cap: lead.cap,
     comune: lead.comune,
     provincia: lead.provincia,
+    telefono: lead.telefono,
+    cellulare: lead.cellulare,
+    pec: lead.pec,
+    forma_giuridica: lead.forma_giuridica,
+    mcc: lead.mcc,
+    psp_attuale: lead.psp_attuale,
+    orari: lead.orari,
+    n_punti_vendita: lead.n_punti_vendita,
     fatturato_mensile: lead.fatturato_mensile,
     target: lead.target,
     zona_manuale: lead.zona_manuale,
@@ -159,6 +175,49 @@ export function AnagraficaScheda({ lead }: { lead: LeadConBrand }) {
           )}
         </Campo>
 
+        {/* Recapiti dell'AZIENDA. I nominativi stanno nella rubrica contatti:
+            qui c'è il centralino, che non è "un contatto" (CRM 3.0). */}
+        <Campo etichetta="Telefono">
+          {(id) => (
+            <Input
+              id={id}
+              type="tel"
+              value={bozza.telefono ?? ''}
+              onChange={(e) => imposta('telefono', e.target.value || null)}
+            />
+          )}
+        </Campo>
+        <Campo etichetta="Cellulare">
+          {(id) => (
+            <Input
+              id={id}
+              type="tel"
+              value={bozza.cellulare ?? ''}
+              onChange={(e) => imposta('cellulare', e.target.value || null)}
+            />
+          )}
+        </Campo>
+        <Campo etichetta="PEC">
+          {(id) => (
+            <Input
+              id={id}
+              type="email"
+              value={bozza.pec ?? ''}
+              onChange={(e) => imposta('pec', e.target.value || null)}
+            />
+          )}
+        </Campo>
+        <Campo etichetta="Forma giuridica">
+          {(id) => (
+            <Input
+              id={id}
+              placeholder="SRL, SNC, ditta individuale…"
+              value={bozza.forma_giuridica ?? ''}
+              onChange={(e) => imposta('forma_giuridica', e.target.value || null)}
+            />
+          )}
+        </Campo>
+
         <Campo etichetta="Indirizzo">
           {(id) => (
             <Input
@@ -237,6 +296,53 @@ export function AnagraficaScheda({ lead }: { lead: LeadConBrand }) {
                 Imposta zona manualmente
               </label>
             </div>
+          )}
+        </Campo>
+
+        {/* Campi commerciali del CRM 3.0: categoria merceologica, acquirer
+            attuale, orari di apertura, quanti punti vendita. */}
+        <Campo etichetta="MCC (categoria)">
+          {(id) => (
+            <Input
+              id={id}
+              value={bozza.mcc ?? ''}
+              onChange={(e) => imposta('mcc', e.target.value || null)}
+            />
+          )}
+        </Campo>
+        <Campo etichetta="PSP / acquirer attuale">
+          {(id) => (
+            <Input
+              id={id}
+              value={bozza.psp_attuale ?? ''}
+              onChange={(e) => imposta('psp_attuale', e.target.value || null)}
+            />
+          )}
+        </Campo>
+        <Campo etichetta="Orari di apertura">
+          {(id) => (
+            <Input
+              id={id}
+              placeholder="Lun-Sab 8-13 / 16-20"
+              value={bozza.orari ?? ''}
+              onChange={(e) => imposta('orari', e.target.value || null)}
+            />
+          )}
+        </Campo>
+        <Campo etichetta="N. punti vendita">
+          {(id) => (
+            <Input
+              id={id}
+              inputMode="numeric"
+              value={bozza.n_punti_vendita ?? ''}
+              onChange={(e) => {
+                const n = Number(e.target.value)
+                imposta(
+                  'n_punti_vendita',
+                  e.target.value.trim() === '' || !Number.isInteger(n) || n < 0 ? null : n,
+                )
+              }}
+            />
           )}
         </Campo>
 

@@ -3,6 +3,7 @@ import { urlMappa, indirizzoCompleto } from '@/lib/maps'
 import type { Enum } from '@/types/db'
 import type { LeadConBrand } from '../api'
 import { BADGE_BRAND, BADGE_STATO, TUTTI_I_BRAND } from '../brand'
+import { SelettoreVerifica } from './SelettoreVerifica'
 import { useAggiungiBrand, useRimuoviBrand } from '../queries'
 
 const ETICHETTA_FONTE: Record<Enum<'fonte_lead'>, string> = {
@@ -29,6 +30,7 @@ export function TestataLead({ lead }: { lead: LeadConBrand }) {
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <Pillola tinta="neutro">{ETICHETTA_FONTE[lead.fonte]}</Pillola>
+        <SelettoreVerifica lead={lead} />
 
         {TUTTI_I_BRAND.map((brand) => {
           const stato = attivi.get(brand)

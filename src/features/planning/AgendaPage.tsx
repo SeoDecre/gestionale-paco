@@ -9,6 +9,7 @@ import { urlPercorso, indirizzoCompleto } from '@/lib/maps'
 import { useAppuntamentiGiorno, useAnnullaAppuntamento, useSegnaFatto } from './queries'
 import { giornoISO, spostaGiorno } from './giorni'
 import type { AppuntamentoConLead } from './api'
+import { AzioniAppuntamento } from './AzioniAppuntamento'
 
 export function AgendaPage() {
   const [giorno, setGiorno] = useState(giornoISO())
@@ -20,6 +21,19 @@ export function AgendaPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
+      {/* Giorno / settimana: la griglia settimanale è quella del CRM 3.0. */}
+      <div className="mb-3 flex gap-2">
+        <span className="flex-1 rounded-card bg-info-soft px-3 py-2 text-center text-campo font-medium text-info-soft-text">
+          Giorno
+        </span>
+        <Link
+          to="/agenda/settimana"
+          className="flex-1 rounded-card border border-bordo bg-superficie px-3 py-2 text-center text-campo text-testo-debole"
+        >
+          Settimana
+        </Link>
+      </div>
+
       <div className="mb-4 flex items-center justify-between">
         <Bottone variante="secondario" onClick={() => setGiorno(spostaGiorno(giorno, -1))}>
           ←
@@ -105,6 +119,10 @@ function RigaAgenda({ app }: { app: AppuntamentoConLead }) {
             Annulla
           </button>
         </div>
+      </div>
+      {/* Calendario, navigazione, promemoria: le scorciatoie del CRM 3.0. */}
+      <div className="mt-2">
+        <AzioniAppuntamento app={app} />
       </div>
     </li>
   )

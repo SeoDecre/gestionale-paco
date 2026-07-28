@@ -14,6 +14,7 @@ import {
 } from './api'
 import { useDatasetReport, useListeSalvate, useSalvaLista, useEliminaLista } from './queries'
 import { COLONNE_EXPORT, esportaXlsx } from './export'
+import { CondividiReport } from './CondividiReport'
 import {
   efficaciaPerFonte,
   conversionePerZona,
@@ -215,6 +216,14 @@ function PannelloExport({
       >
         Esporta Excel ({leads.length})
       </Bottone>
+
+      {/* Condivisione del CRM 3.0: mail, WhatsApp, Telegram, copia, PDF. */}
+      <div className="mt-3 border-t border-bordo pt-3">
+        <p className="mb-2 text-etichetta text-testo-debole">
+          Condividi i {leads.length} lead filtrati:
+        </p>
+        <CondividiReport lead={leads} />
+      </div>
 
       <div className="mt-4 border-t border-bordo pt-3">
         <p className="mb-1 text-etichetta text-testo-debole">Salva i filtri + colonne come lista:</p>

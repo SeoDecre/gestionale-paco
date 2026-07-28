@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as api from './api'
-import { estremiGiorno, giornoISO, spostaGiorno } from './giorni'
+import { estremiGiorno, estremiSettimana, giornoISO, spostaGiorno } from './giorni'
 import { calcolaSuggerimenti } from './suggerimenti'
 
 export const chiaviAppuntamenti = {
@@ -73,3 +73,13 @@ export function useEliminaAppuntamento() {
   const invalida = useInvalida()
   return useMutation({ mutationFn: api.eliminaAppuntamento, onSuccess: invalida })
 }
+
+/** Appuntamenti di un'intera settimana: una query sola per sette colonne. */
+export const useAppuntamentiSettimana = (lunedi: string) =>
+  useQuery({
+    queryKey: ['appuntamenti', 'settimana', lunedi],
+    queryFn: () => {
+      const { daISO, aISO } = estremiSettimana(lunedi)
+      return api.appuntamentiTra(daISO, aISO)
+    },
+  })
