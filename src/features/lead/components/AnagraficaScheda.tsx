@@ -5,10 +5,16 @@ import { BannerModifiche } from '@/components/ui/BannerModifiche'
 import { Errore } from '@/components/ui/Stato'
 import { useBozza } from '@/lib/useBozza'
 import { pivaValida, capValido, provinciaValida, emailValida } from '@/lib/validazione'
+import { formattaEuro } from '@/lib/format'
+import { urlGoogleAttivita, urlFacebookAttivita, urlGooglePiva } from '@/lib/ricerche'
 import type { Enum, Riga } from '@/types/db'
 import type { LeadConBrand } from '../api'
 import { useAggiornaLead } from '../queries'
 import { useParametriTarget, useZone } from '@/features/vocabolari/queries'
+import { useOfferte } from '@/features/offerte/queries'
+import { BottonePdfOfferta } from '@/features/offerte/BottonePdfOfferta'
+import { BADGE_BRAND } from '../brand'
+import { dividiPerTarget } from '../offerta'
 import { suggerisciTarget } from '../target'
 
 type CampiAnagrafica = Pick<
@@ -27,6 +33,7 @@ type CampiAnagrafica = Pick<
   | 'target'
   | 'zona_manuale'
   | 'zona_id'
+  | 'offerta_consigliata_id'
   | 'note'
 >
 
@@ -36,6 +43,7 @@ export function AnagraficaScheda({ lead }: { lead: LeadConBrand }) {
   const salva = useAggiornaLead(lead.id)
   const bande = useParametriTarget()
   const zone = useZone()
+  const offerte = useOfferte()
 
   const { bozza, imposta, annulla, modificato } = useBozza<CampiAnagrafica>({
     ragione_sociale: lead.ragione_sociale,
@@ -52,6 +60,7 @@ export function AnagraficaScheda({ lead }: { lead: LeadConBrand }) {
     target: lead.target,
     zona_manuale: lead.zona_manuale,
     zona_id: lead.zona_id,
+    offerta_consigliata_id: lead.offerta_consigliata_id,
     note: lead.note,
   })
 
@@ -68,6 +77,30 @@ export function AnagraficaScheda({ lead }: { lead: LeadConBrand }) {
     const n = Number(v.replace(',', '.'))
     return v.trim() === '' || Number.isNaN(n) ? null : n
   }
+
+  // §4 "Verifica dati online". Ricerche costruite sul nome che si sta
+  // scrivendo, non su quello salvato: si cerca proprio per correggerlo.
+  const gGoogle = urlGoogleAttivita(bozza)
+  const gFacebook = urlFacebookAttivita(bozza)
+  const gPiva = urlGooglePiva(bozza.piva)
+
+  /**
+   * §4: l'offerta consigliata si "pesca dal target". Restano scegliibili solo
+   * le offerte attive dei brand del lead — più quella già collegata anche se
+   * archiviata, altrimenti archiviare un'offerta cancellerebbe dalla tendina
+   * la traccia di cosa era stato proposto (§9).
+   */
+  const brandLead = new Set(lead.lead_brand.map((b) => b.brand))
+  const scegliibili = (offerte.data ?? []).filter(
+    (o) =>
+      (o.stato === 'attiva' || o.id === bozza.offerta_consigliata_id) &&
+      (brandLead.size === 0 || brandLead.has(o.brand)),
+  )
+  const { consigliate, altre } = dividiPerTarget(scegliibili, bozza.target)
+  const offertaScelta = scegliibili.find((o) => o.id === bozza.offerta_consigliata_id)
+  const etichettaOfferta = (o: Riga<'offerte'>) =>
+    `${BADGE_BRAND[o.brand].etichetta} · ${o.nome}` +
+    (o.canone != null ? ` · ${formattaEuro(o.canone)}` : '')
 
   return (
     <Scheda titolo="Anagrafica" className="mb-4">
@@ -104,12 +137,16 @@ export function AnagraficaScheda({ lead }: { lead: LeadConBrand }) {
 
         <Campo etichetta="P.IVA" errore={erroriPiva}>
           {(id) => (
-            <Input
-              id={id}
-              inputMode="numeric"
-              value={bozza.piva ?? ''}
-              onChange={(e) => imposta('piva', e.target.value || null)}
-            />
+            <div className="flex items-center gap-2">
+              <Input
+                id={id}
+                inputMode="numeric"
+                value={bozza.piva ?? ''}
+                onChange={(e) => imposta('piva', e.target.value || null)}
+              />
+              {/* §4: tasto ricerca Google sulla P.IVA. */}
+              {gPiva && <LinkRicerca href={gPiva} etichetta="Cerca" />}
+            </div>
           )}
         </Campo>
         <Campo etichetta="Codice fiscale">
@@ -244,6 +281,72 @@ export function AnagraficaScheda({ lead }: { lead: LeadConBrand }) {
           )}
         </Campo>
 
+        {/* §4: offerta consigliata, pescata dal target ma scelta a mano. */}
+        <Campo etichetta="Offerta consigliata" className="sm:col-span-2">
+          {(id) => (
+            <div className="flex flex-col gap-1.5">
+              <Select
+                id={id}
+                value={bozza.offerta_consigliata_id ?? ''}
+                onChange={(e) => imposta('offerta_consigliata_id', e.target.value || null)}
+              >
+                <option value="">— nessuna —</option>
+                {consigliate.length > 0 && (
+                  <optgroup
+                    label={
+                      bozza.target ? `Adatte al target ${bozza.target}` : 'Senza vincolo di target'
+                    }
+                  >
+                    {consigliate.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {etichettaOfferta(o)}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                {altre.length > 0 && (
+                  <optgroup label="Fuori target">
+                    {altre.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {etichettaOfferta(o)}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+              </Select>
+              {offertaScelta && (
+                <div className="flex flex-wrap items-center gap-2 text-etichetta text-testo-debole">
+                  {offertaScelta.stato === 'archiviata' && (
+                    <Pillola tinta="neutro">Archiviata</Pillola>
+                  )}
+                  {offertaScelta.descrizione && <span>{offertaScelta.descrizione}</span>}
+                  <BottonePdfOfferta path={offertaScelta.pdf_path} etichetta="Apri PDF offerta" />
+                </div>
+              )}
+              {scegliibili.length === 0 && (
+                <span className="text-etichetta text-testo-debole">
+                  Nessuna offerta attiva per i brand di questo lead — si creano in Configurazione.
+                </span>
+              )}
+            </div>
+          )}
+        </Campo>
+
+        {/* §4: verifica dati online, basata sul nome attività. */}
+        <Campo etichetta="Verifica dati online" className="sm:col-span-2">
+          {() => (
+            <div className="flex flex-wrap items-center gap-2">
+              {gGoogle && <LinkRicerca href={gGoogle} etichetta="Google" />}
+              {gFacebook && <LinkRicerca href={gFacebook} etichetta="Facebook" />}
+              {!gGoogle && (
+                <span className="text-etichetta text-testo-debole">
+                  Serve la ragione sociale.
+                </span>
+              )}
+            </div>
+          )}
+        </Campo>
+
         <Campo etichetta="Note" className="sm:col-span-2">
           {(id) => (
             <Textarea
@@ -271,5 +374,23 @@ export function AnagraficaScheda({ lead }: { lead: LeadConBrand }) {
         />
       )}
     </Scheda>
+  )
+}
+
+/**
+ * Link di ricerca esterna §4. Scheda nuova (`_blank`) con `noreferrer`: il lead
+ * si sta modificando, non deve sparire sotto i piedi. Altezza 44px come i
+ * bottoni — qui è un <a>, la regola CSS globale non lo raggiunge.
+ */
+function LinkRicerca({ href, etichetta }: { href: string; etichetta: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex h-11 items-center rounded-card border border-info-soft-border bg-info-soft px-3 text-etichetta font-medium text-info-soft-text"
+    >
+      🔍 {etichetta}
+    </a>
   )
 }

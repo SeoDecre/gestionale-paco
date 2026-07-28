@@ -15,6 +15,7 @@ import {
   useEliminaPos,
 } from '../queries'
 import { useEtichetteSede, useTipiPos } from '@/features/vocabolari/queries'
+import { ContatorePos } from './ContatorePos'
 
 const MAX_SEDI = 4
 
@@ -36,6 +37,11 @@ export function PannelloSedi({ leadId }: { leadId: string }) {
       }
       className="mb-4"
     >
+      {/* §4: confronto fra POS dichiarati a voce e POS davvero censiti. */}
+      <div className="mb-3">
+        <ContatorePos leadId={leadId} />
+      </div>
+
       {aggiungi && !pieno && <FormSede leadId={leadId} onFatto={() => setAggiungi(false)} />}
 
       {sedi.isLoading && <Caricamento />}

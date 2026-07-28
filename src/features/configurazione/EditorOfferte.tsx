@@ -1,10 +1,12 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Scheda } from '@/components/ui/Scheda'
 import { Bottone } from '@/components/ui/Bottone'
 import { Campo, Input, Select, Textarea } from '@/components/ui/Campo'
 import { Pillola } from '@/components/ui/Pillola'
 import { Caricamento, Errore, Vuoto } from '@/components/ui/Stato'
 import { formattaEuro } from '@/lib/format'
+import { messaggioErrore } from '@/lib/errors'
+import { caricaPdfOfferta } from '@/lib/media'
 import type { Enum, Riga } from '@/types/db'
 import { TUTTI_I_BRAND, BADGE_BRAND } from '@/features/lead/brand'
 import {
@@ -14,6 +16,7 @@ import {
   useArchiviaOfferta,
   useEliminaOfferta,
 } from '@/features/offerte/queries'
+import { BottonePdfOfferta } from '@/features/offerte/BottonePdfOfferta'
 import type { NuovaOfferta } from '@/features/offerte/api'
 
 const LETTERE: Enum<'target_lettera'>[] = ['E', 'A', 'B', 'C']
@@ -68,9 +71,10 @@ function RigaOfferta({ offerta }: { offerta: Riga<'offerte'> }) {
             {range && <Pillola tinta="avviso">Target {range}</Pillola>}
             {offerta.stato === 'archiviata' && <Pillola tinta="neutro">Archiviata</Pillola>}
           </div>
-          {offerta.canone != null && (
-            <p className="text-etichetta text-testo-debole">Canone {formattaEuro(offerta.canone)}</p>
-          )}
+          <p className="flex flex-wrap items-center gap-2 text-etichetta text-testo-debole">
+            {offerta.canone != null && <span>Canone {formattaEuro(offerta.canone)}</span>}
+            <BottonePdfOfferta path={offerta.pdf_path} />
+          </p>
         </div>
         <div className="flex flex-shrink-0 items-center gap-2">
           <button className="text-etichetta text-info-soft-text" onClick={() => setModifica(true)}>
@@ -113,8 +117,33 @@ function FormOfferta({
   const [targetMax, setTargetMax] = useState(offerta?.target_max ?? '')
   const [canone, setCanone] = useState(offerta?.canone?.toString() ?? '')
 
+  // PDF originale (§9). Si carica subito su Storage alla scelta del file; qui
+  // resta solo il path, che viene scritto insieme al resto dell'offerta.
+  const [pdfPath, setPdfPath] = useState(offerta?.pdf_path ?? null)
+  const [nomePdf, setNomePdf] = useState<string | null>(null)
+  const [caricando, setCaricando] = useState(false)
+  const [errorePdf, setErrorePdf] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
   const salva = offerta ? aggiorna : crea
   const inCorso = salva.isPending
+
+  async function onFilePdf(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = '' // consente di riselezionare lo stesso file
+    if (!file) return
+    setErrorePdf(null)
+    setCaricando(true)
+    try {
+      const f = await caricaPdfOfferta(file)
+      setPdfPath(f.storage_path)
+      setNomePdf(f.nome_file)
+    } catch (err) {
+      setErrorePdf(messaggioErrore(err))
+    } finally {
+      setCaricando(false)
+    }
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -126,6 +155,7 @@ function FormOfferta({
       target_min: (targetMin || null) as Enum<'target_lettera'> | null,
       target_max: (targetMax || null) as Enum<'target_lettera'> | null,
       canone: canone.trim() === '' ? null : Number(canone.replace(',', '.')),
+      pdf_path: pdfPath,
     }
     if (offerta) await aggiorna.mutateAsync({ id: offerta.id, patch: dati })
     else await crea.mutateAsync(dati)
@@ -185,6 +215,37 @@ function FormOfferta({
           <Textarea id={id} value={descrizione} onChange={(e) => setDescrizione(e.target.value)} />
         )}
       </Campo>
+
+      <Campo etichetta="PDF originale">
+        {() => (
+          <div className="flex flex-wrap items-center gap-2">
+            <Bottone
+              variante="secondario"
+              onClick={() => fileRef.current?.click()}
+              disabled={caricando}
+            >
+              {caricando ? 'Caricamento…' : pdfPath ? 'Sostituisci PDF' : 'Carica PDF'}
+            </Bottone>
+            <input ref={fileRef} type="file" accept="application/pdf" hidden onChange={onFilePdf} />
+            {nomePdf && <span className="text-etichetta text-testo-debole">{nomePdf}</span>}
+            <BottonePdfOfferta path={pdfPath} etichetta="Apri PDF" />
+            {pdfPath && (
+              <button
+                type="button"
+                className="text-etichetta text-danger-soft-text"
+                onClick={() => {
+                  setPdfPath(null)
+                  setNomePdf(null)
+                }}
+              >
+                Rimuovi
+              </button>
+            )}
+            {errorePdf && <span className="text-etichetta text-danger-soft-text">{errorePdf}</span>}
+          </div>
+        )}
+      </Campo>
+
       {salva.isError && <Errore errore={salva.error} />}
       <div className="flex gap-2">
         <Bottone type="submit" disabled={inCorso || !nome.trim()}>

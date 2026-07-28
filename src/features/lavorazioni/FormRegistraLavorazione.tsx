@@ -6,6 +6,7 @@ import type { Enum } from '@/types/db'
 import { useEsiti, useAzioniSuccessive } from '@/features/vocabolari/queries'
 import { useContatti } from '@/features/lead/queries'
 import { TUTTI_I_BRAND, BADGE_BRAND } from '@/features/lead/brand'
+import { ContatorePos } from '@/features/lead/components/ContatorePos'
 import { useSlotSuggeriti } from '@/features/planning/queries'
 import { formattaData } from '@/lib/format'
 import { useRegistraLavorazione } from './queries'
@@ -45,9 +46,19 @@ export function FormRegistraLavorazione({
 
   const { suggerimenti } = useSlotSuggeriti(leadZonaId, Number(durata) || 60)
 
+  // La colonna è uno smallint >= 0: quanto non è un intero non negativo non è
+  // una dichiarazione, è un campo ancora da compilare.
+  const posNumero = Number(posRichiesti)
+  const posValido =
+    posRichiesti.trim() !== '' && Number.isInteger(posNumero) && posNumero >= 0
+  /**
+   * Mentre si digita il contatore §5 segue il campo; a campo vuoto `undefined`
+   * lo fa tornare all'ultima dichiarazione già registrata sul lead.
+   */
+  const posDichiaratiOra = posValido ? posNumero : undefined
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
-    const posNum = posRichiesti.trim() === '' ? null : Number(posRichiesti)
     await registra.mutateAsync({
       lav: {
         lead_id: leadId,
@@ -55,7 +66,7 @@ export function FormRegistraLavorazione({
         esito_id: esitoId || null,
         azione_successiva_id: azioneId || null,
         contatto_id: contattoId || null,
-        pos_richiesti: posNum != null && !Number.isNaN(posNum) ? posNum : null,
+        pos_richiesti: posValido ? posNumero : null,
         note: note.trim() || null,
       },
       appuntamento:
@@ -122,12 +133,16 @@ export function FormRegistraLavorazione({
         </Campo>
         <Campo etichetta="POS dichiarati a voce">
           {(id) => (
-            <Input
-              id={id}
-              inputMode="numeric"
-              value={posRichiesti}
-              onChange={(e) => setPosRichiesti(e.target.value)}
-            />
+            <div className="flex flex-col gap-1.5">
+              <Input
+                id={id}
+                inputMode="numeric"
+                value={posRichiesti}
+                onChange={(e) => setPosRichiesti(e.target.value)}
+              />
+              {/* §5: il censimento reale a confronto con quanto si sta dichiarando. */}
+              <ContatorePos leadId={leadId} dichiarati={posDichiaratiOra} />
+            </div>
           )}
         </Campo>
       </div>

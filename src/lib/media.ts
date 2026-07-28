@@ -11,22 +11,46 @@ const BUCKET = 'allegati'
 
 export type FileCaricato = { storage_path: string; nome_file: string }
 
-/** Carica un blob e restituisce il path da salvare in allegati.storage_path. */
-export async function caricaAllegato(
-  leadId: string,
+/**
+ * Carica un blob sotto {owner_id}/{cartella}/. Il primo segmento DEVE restare
+ * l'uuid utente: è quello che le policy di storage.objects confrontano con
+ * auth.uid(). Tutto il resto del path è libero.
+ */
+async function carica(
+  cartella: string,
   blob: Blob,
   estensione: string,
   nomeVisibile?: string,
 ): Promise<FileCaricato> {
   const owner = await ownerId()
   const nomeFile = `${crypto.randomUUID()}.${estensione}`
-  const path = `${owner}/${leadId}/${nomeFile}`
+  const path = `${owner}/${cartella}/${nomeFile}`
   const { error } = await supabase.storage.from(BUCKET).upload(path, blob, {
     contentType: blob.type || undefined,
     upsert: false,
   })
   if (error) throw error
   return { storage_path: path, nome_file: nomeVisibile ?? nomeFile }
+}
+
+/** Carica un blob e restituisce il path da salvare in allegati.storage_path. */
+export function caricaAllegato(
+  leadId: string,
+  blob: Blob,
+  estensione: string,
+  nomeVisibile?: string,
+): Promise<FileCaricato> {
+  return carica(leadId, blob, estensione, nomeVisibile)
+}
+
+/**
+ * PDF originale di un'offerta (§9). Non sta sotto un lead — l'offerta è del
+ * listino, non di un cliente — quindi va nella cartella {owner}/offerte/, come
+ * previsto dalla migrazione 12.
+ */
+export function caricaPdfOfferta(file: File): Promise<FileCaricato> {
+  const estensione = file.name.split('.').pop() || 'pdf'
+  return carica('offerte', file, estensione, file.name)
 }
 
 /** URL firmato per aprire/scaricare un allegato. Scadenza breve (default 1h). */

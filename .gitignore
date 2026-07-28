@@ -34,3 +34,7 @@ supabase/.branches
 
 # Campioni dati import (contengono PII cliente) — mai in git
 *.xlsx
+
+# Vecchio prototipo Express/SQLite copiato qui a mano: non fa parte di questo
+# build (greenfield, vedi HANDOFF). Fuori da git e fuori dal lint.
+AgentPro_CRM_3.0*/

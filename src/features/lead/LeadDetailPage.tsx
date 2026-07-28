@@ -40,7 +40,9 @@ export function LeadDetailPage() {
             brandIniziale={lead.data.lead_brand[0]?.brand}
             leadZonaId={lead.data.zona_id}
           />
-          <PannelloContatti leadId={id} />
+          {/* Stesso brand usato per la lavorazione automatica del tasto
+              telefono (§4): il primo del lead, come per Registra lavorazione. */}
+          <PannelloContatti leadId={id} brand={lead.data.lead_brand[0]?.brand} />
           <PannelloSedi leadId={id} />
           <PannelloConcorrenti leadId={id} />
           {lead.data.lead_brand.some((b) => b.brand === 'NEXI') && <PannelloNexi leadId={id} />}

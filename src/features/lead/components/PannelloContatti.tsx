@@ -4,6 +4,8 @@ import { Bottone } from '@/components/ui/Bottone'
 import { Input, Select } from '@/components/ui/Campo'
 import { Pillola } from '@/components/ui/Pillola'
 import { Caricamento, Errore, Vuoto } from '@/components/ui/Stato'
+import { testoChiamataAutomatica } from '@/lib/format'
+import { useRegistraLavorazione } from '@/features/lavorazioni/queries'
 import type { Enum } from '@/types/db'
 import type { ContattoConRuolo } from '../api'
 import {
@@ -20,7 +22,14 @@ const ETICHETTA_PROVENIENZA: Record<Enum<'provenienza_contatto'>, string> = {
   manuale: 'Manuale',
 }
 
-export function PannelloContatti({ leadId }: { leadId: string }) {
+export function PannelloContatti({
+  leadId,
+  brand,
+}: {
+  leadId: string
+  /** Brand a cui attribuire la lavorazione automatica del tasto telefono (§4). */
+  brand?: Enum<'brand'>
+}) {
   const contatti = useContatti(leadId)
   const [aggiungi, setAggiungi] = useState(false)
 
@@ -43,17 +52,46 @@ export function PannelloContatti({ leadId }: { leadId: string }) {
       )}
       <ul className="flex flex-col gap-2">
         {contatti.data?.map((c) => (
-          <RigaContatto key={c.id} leadId={leadId} contatto={c} />
+          <RigaContatto key={c.id} leadId={leadId} contatto={c} brand={brand} />
         ))}
       </ul>
     </Scheda>
   )
 }
 
-function RigaContatto({ leadId, contatto }: { leadId: string; contatto: ContattoConRuolo }) {
+function RigaContatto({
+  leadId,
+  contatto,
+  brand,
+}: {
+  leadId: string
+  contatto: ContattoConRuolo
+  brand?: Enum<'brand'>
+}) {
   const principale = useImpostaPrincipale(leadId)
   const elimina = useEliminaContatto(leadId)
+  const chiamata = useRegistraLavorazione(leadId)
   const contatti = [contatto.telefono, contatto.email].filter(Boolean).join(' · ')
+
+  /**
+   * §4: il tasto verde chiama E registra da solo una lavorazione veloce
+   * "Chiamato [nome] il [data] alle [ora]". Non si fa preventDefault: la
+   * navigazione a tel: deve partire comunque, anche se la scrittura fallisce
+   * o è lenta — Paco sta per parlare col cliente, la telefonata viene prima.
+   * Senza brand sul lead non c'è una lavorazione da scrivere (brand è NOT
+   * NULL): si chiama e basta, e il tasto lo dice nel titolo.
+   */
+  function onChiama() {
+    if (!brand) return
+    chiamata.mutate({
+      lav: {
+        lead_id: leadId,
+        brand,
+        contatto_id: contatto.id,
+        note: testoChiamataAutomatica(contatto.nome),
+      },
+    })
+  }
 
   return (
     <li className="rounded-card border border-bordo px-3 py-2">
@@ -80,6 +118,21 @@ function RigaContatto({ leadId, contatto }: { leadId: string; contatto: Contatto
             </button>
           )}
           <Pillola tinta="neutro">{ETICHETTA_PROVENIENZA[contatto.provenienza]}</Pillola>
+          {contatto.telefono && (
+            <a
+              href={`tel:${contatto.telefono.replace(/\s/g, '')}`}
+              onClick={onChiama}
+              aria-label={`Chiama ${contatto.nome}`}
+              title={
+                brand
+                  ? `Chiama ${contatto.nome} e registra la lavorazione`
+                  : `Chiama ${contatto.nome}`
+              }
+              className="inline-flex h-11 w-11 items-center justify-center rounded-pillola border border-success-soft-border bg-success-soft text-success-soft-text"
+            >
+              📞
+            </a>
+          )}
           <button
             aria-label="Elimina contatto"
             className="px-1 text-danger-soft-text"
@@ -90,6 +143,16 @@ function RigaContatto({ leadId, contatto }: { leadId: string; contatto: Contatto
           </button>
         </div>
       </div>
+      {chiamata.isError && (
+        <p className="mt-1 text-etichetta text-danger-soft-text">
+          Chiamata partita, ma la lavorazione non è stata salvata.
+        </p>
+      )}
+      {chiamata.isSuccess && (
+        <p className="mt-1 text-etichetta text-success-soft-text">
+          {testoChiamataAutomatica(contatto.nome, new Date(chiamata.submittedAt))} — registrato.
+        </p>
+      )}
     </li>
   )
 }
