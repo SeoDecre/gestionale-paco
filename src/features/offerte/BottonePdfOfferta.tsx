@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { messaggioErrore } from '@/lib/errors'
 import { urlFirmato } from '@/lib/media'
+import { Bottone } from '@/components/ui/Bottone'
 
 /**
  * Apre il PDF originale di un'offerta (§9). Il bucket è privato: il link non
@@ -33,15 +34,19 @@ export function BottonePdfOfferta({
 
   return (
     <span className="inline-flex items-center gap-2">
-      <button
-        type="button"
+      <Bottone
+        variante="fantasma"
+        misura="sm"
+        icona="documento"
         onClick={apri}
-        disabled={inCorso}
-        className="text-etichetta text-info-soft-text underline"
+        caricamento={inCorso}
+        className="text-info-soft-text"
       >
-        📄 {inCorso ? 'Apertura…' : etichetta}
-      </button>
-      {errore && <span className="text-etichetta text-danger-soft-text">{errore}</span>}
+        {inCorso ? 'Apertura…' : etichetta}
+      </Bottone>
+      {errore && (
+        <span className="text-etichetta text-danger-soft-text">{errore}</span>
+      )}
     </span>
   )
 }

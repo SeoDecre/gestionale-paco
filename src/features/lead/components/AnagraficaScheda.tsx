@@ -1,4 +1,5 @@
 import { Scheda } from '@/components/ui/Scheda'
+import { Icona } from '@/components/ui/Icona'
 import { Campo, Input, Select, Textarea } from '@/components/ui/Campo'
 import { Pillola } from '@/components/ui/Pillola'
 import { BannerModifiche } from '@/components/ui/BannerModifiche'
@@ -518,9 +519,11 @@ function LinkRicerca({ href, etichetta }: { href: string; etichetta: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex h-11 items-center rounded-card border border-info-soft-border bg-info-soft px-3 text-etichetta font-medium text-info-soft-text"
+      className="premibile inline-flex h-11 items-center gap-1.5 rounded-card border border-info-soft-border bg-info-soft px-3 text-etichetta font-medium text-info-soft-text"
     >
-      🔍 {etichetta}
+      <Icona nome="cerca" misura="sm" />
+      {etichetta}
+      <Icona nome="esterno" misura="sm" className="opacity-60" />
     </a>
   )
 }

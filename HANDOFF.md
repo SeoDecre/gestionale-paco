@@ -11,7 +11,9 @@ regenerated. Remaining: run the data migration, real-device verification.
 1. **`AgentPro_Specifica_Sessionex sergio.md`** (Italian) — the authoritative
    functional spec, **§1–§15**. It is present in the repo. **§0 (stack) and §16
    (build order) are obsolete** — see "Decisions already settled".
-2. This document — status, settled decisions, landmines.
+2. **`DESIGN.md`** — the design system: tokens, primitives, the rules that are
+   enforced, and how to verify contrast. Read it before touching any UI.
+3. This document — status, settled decisions, landmines.
 
 An earlier version of this handoff warned the spec was missing and that features
 were built to assumptions. **That warning is void** — the spec was recovered on
@@ -260,6 +262,42 @@ Stated losses (all in the script header): `lavorazioni.esito_id` and contact
 roles stay NULL, because those are per-user vocabularies with generated ids and
 guessing the mapping would invent data — the legacy text is preserved in the
 notes instead. Attachments are files on disk, not rows, so they do not migrate.
+
+### Design-system pass (2026-07-29)
+
+The whole UI was put on one system. See **`DESIGN.md`** for the rules; the
+short version of what changed and why:
+
+| Before | After |
+|---|---|
+| ~40 emoji used as icons, `0` `<svg>` | one Lucide set behind `<Icona nome="…">`; `NomeIcona` makes an emoji a **type error** |
+| `0` transitions, `0` focus styles | motion + duration + easing tokens, one global `:focus-visible` ring, `premibile` press feedback |
+| colour tokens only | tokens for type, radii, elevation, motion, z-index, focus, touch target |
+| single theme | **dark theme**, added as one section of `index.css` and zero component changes |
+| `rounded-card border border-bordo bg-superficie` ×13 | `superficie-card` |
+| the same chip/segment/callout redrawn by hand in 3–11 places | `Chip`, `Segmentato`, `Avviso` |
+| `text-white` on a `*-soft-text` fill (×5) | `Segmentato` / `Bottone primario` — those five were a **real dark-mode bug**: light fill + white text |
+| `text-[11px]`, `text-[18px]`, `z-40`, `z-50`, `shadow-lg` | tokens; **zero** arbitrary values remain |
+| placeholder-as-label in several forms | `Campo` with visible labels, wired `aria-invalid`/`aria-describedby`, semantic `type=`/`inputMode=` |
+
+Two things worth knowing:
+
+- **`hover:` is redefined** in `index.css` via `@custom-variant`, wrapped in
+  `@media (hover: hover) and (pointer: fine)`. Tailwind v4 does **not** do this
+  by default (I assumed it did and checked the compiled CSS — it doesn't).
+  Without it a tapped element stays visually "hovered" on the phone.
+- **Contrast is machine-checked.** `npm run contrasto` parses the tokens out of
+  `index.css`, converts oklch → sRGB and asserts every text/background pair in
+  **both** themes. 46/46 pass. Re-run it whenever a colour changes — it exits
+  non-zero on failure. It caught `bordo-forte` sitting at 1.63:1 when WCAG
+  1.4.11 wants 3:1 for a control border.
+
+`lucide-react` is a new dependency (+24 kB, ~2% of the bundle). Only
+`src/components/ui/Icona.tsx` imports it.
+
+**Still never seen rendered** — this pass rewrote every screen again, so the
+"get eyes on it" gap below is *larger* than before, not smaller. The dark theme
+especially is correct on paper and has never been looked at.
 
 ### Milestone status
 
@@ -720,4 +758,12 @@ Regenerate the legacy data migration:
 ```bash
 python3 scripts/migra-crm3.py "AgentPro_CRM_3.0 copia/data/crm.db" \
   --mappa-esistenti esistenti.json > migrazione.json
+```
+
+---
+
+## Commands (design)
+
+```bash
+npm run contrasto    # verifica WCAG dei token nei due temi — esce != 0 se fallisce
 ```

@@ -77,28 +77,44 @@ export function CondividiReport({ lead }: { lead: LeadRicco[] }) {
             testo('mail'),
           )
         }}
+        icona="mail"
       >
-        ✉️ Mail
+        Mail
       </Bottone>
       <Bottone
         variante="secondario"
+        icona="messaggio"
         disabled={disabilitato}
         onClick={() => apriEsterno(urlWhatsApp(testo('whatsapp')))}
       >
-        💬 WhatsApp
+        WhatsApp
       </Bottone>
       <Bottone
         variante="secondario"
+        icona="invia"
         disabled={disabilitato}
         onClick={() => apriEsterno(urlTelegram(testo('telegram')))}
       >
-        ✈️ Telegram
+        Telegram
       </Bottone>
-      <Bottone variante="secondario" disabled={disabilitato} onClick={copia}>
-        {copiato ? '✓ Copiato' : '📋 Copia'}
+      {/* L'etichetta cambia in "Copiato" per 2,5s: e' l'unica conferma che
+          l'operazione e' andata a buon fine, perche' gli appunti non si
+          vedono. L'icona cambia con lei, cosi' non e' solo il testo. */}
+      <Bottone
+        variante="secondario"
+        icona={copiato ? 'conferma' : 'copia'}
+        disabled={disabilitato}
+        onClick={copia}
+      >
+        {copiato ? 'Copiato' : 'Copia'}
       </Bottone>
-      <Bottone variante="secondario" disabled={disabilitato} onClick={() => window.print()}>
-        🖨️ Stampa / PDF
+      <Bottone
+        variante="secondario"
+        icona="stampa"
+        disabled={disabilitato}
+        onClick={() => window.print()}
+      >
+        Stampa / PDF
       </Bottone>
     </div>
   )

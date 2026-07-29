@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import { Icona } from '@/components/ui/Icona'
 import { Link } from 'react-router-dom'
 import { Scheda } from '@/components/ui/Scheda'
-import { Bottone } from '@/components/ui/Bottone'
+import { Bottone, BottoneIcona } from '@/components/ui/Bottone'
 import { Pillola } from '@/components/ui/Pillola'
 import { Caricamento, Errore, Vuoto } from '@/components/ui/Stato'
 import { formattaData, formattaOra } from '@/lib/format'
@@ -22,41 +23,61 @@ export function AgendaPage() {
   return (
     <div className="mx-auto max-w-3xl">
       {/* Giorno / settimana: la griglia settimanale è quella del CRM 3.0. */}
+      {/* Giorno e' la vista corrente: e' uno `span`, non un link a se stessa.
+          `aria-current` lo dice anche a chi non vede l'evidenziazione. */}
       <div className="mb-3 flex gap-2">
-        <span className="flex-1 rounded-card bg-info-soft px-3 py-2 text-center text-campo font-medium text-info-soft-text">
+        <span
+          aria-current="page"
+          className="flex-1 rounded-card border border-info-soft-border bg-info-soft px-3 py-2 text-center text-campo font-medium text-info-soft-text"
+        >
           Giorno
         </span>
         <Link
           to="/agenda/settimana"
-          className="flex-1 rounded-card border border-bordo bg-superficie px-3 py-2 text-center text-campo text-testo-debole"
+          className="superficie-card premibile flex-1 px-3 py-2 text-center text-campo text-testo-debole hover:border-bordo-forte hover:text-testo"
         >
           Settimana
         </Link>
       </div>
 
-      <div className="mb-4 flex items-center justify-between">
-        <Bottone variante="secondario" onClick={() => setGiorno(spostaGiorno(giorno, -1))}>
-          ←
-        </Bottone>
-        <div className="text-center">
-          <h1 className="text-titolo font-semibold">{dataLabel}</h1>
-          <button
-            className="text-etichetta text-info-soft-text"
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <BottoneIcona
+          nome="precedente"
+          etichetta="Giorno precedente"
+          variante="secondario"
+          onClick={() => setGiorno(spostaGiorno(giorno, -1))}
+        />
+        <div className="min-w-0 text-center">
+          <h1 className="truncate text-titolo font-semibold">{dataLabel}</h1>
+          <Bottone
+            variante="fantasma"
+            misura="sm"
+            className="text-info-soft-text"
             onClick={() => setGiorno(giornoISO())}
           >
             Oggi
-          </button>
+          </Bottone>
         </div>
-        <Bottone variante="secondario" onClick={() => setGiorno(spostaGiorno(giorno, 1))}>
-          →
-        </Bottone>
+        <BottoneIcona
+          nome="successivo"
+          etichetta="Giorno successivo"
+          variante="secondario"
+          onClick={() => setGiorno(spostaGiorno(giorno, 1))}
+        />
       </div>
 
       <Scheda
         titolo="Appuntamenti"
+        icona="agenda"
         azione={
           percorso && attivi.length > 1 ? (
-            <a href={percorso} className="text-etichetta text-info-soft-text">
+            <a
+              href={percorso}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transizione-colore inline-flex items-center gap-1 text-etichetta font-medium text-info-soft-text hover:underline"
+            >
+              <Icona nome="naviga" misura="sm" />
               Apri percorso
             </a>
           ) : undefined
@@ -82,42 +103,58 @@ function RigaAgenda({ app }: { app: AppuntamentoConLead }) {
   const indirizzo = app.lead ? indirizzoCompleto(app.lead) : ''
 
   return (
-    <li className="rounded-card border border-bordo px-3 py-2">
+    <li className="transizione-colore rounded-card border border-bordo px-3 py-2 hover:border-bordo-forte">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-campo font-medium">
-            <span className="text-info-soft-text">{formattaOra(app.inizio)}</span>
+            <span className="cifre text-info-soft-text">
+              {formattaOra(app.inizio)}
+            </span>
             {'–'}
-            {formattaOra(app.fine)}{' '}
+            <span className="cifre">{formattaOra(app.fine)}</span>{' '}
             {app.lead ? (
-              <Link to={`/lead/${app.lead_id}`} className="underline">
+              <Link
+                to={`/lead/${app.lead_id}`}
+                className="transizione-colore hover:text-info-soft-text hover:underline"
+              >
                 {app.lead.ragione_sociale}
               </Link>
             ) : (
               'Appuntamento'
             )}
           </p>
-          {indirizzo && <p className="truncate text-etichetta text-testo-debole">{indirizzo}</p>}
+          {indirizzo && (
+            <p className="truncate text-etichetta text-testo-debole">
+              {indirizzo}
+            </p>
+          )}
         </div>
-        <div className="flex flex-shrink-0 items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1.5">
           {app.stato === 'fatto' ? (
-            <Pillola tinta="successo">Fatto</Pillola>
+            <Pillola tinta="successo" icona="successo">
+              Fatto
+            </Pillola>
           ) : (
-            <button
-              className="text-etichetta text-success-soft-text"
+            <Bottone
+              variante="fantasma"
+              misura="sm"
+              icona="conferma"
+              className="text-success-soft-text"
               onClick={() => fatto.mutate(app.id)}
-              disabled={fatto.isPending}
+              caricamento={fatto.isPending}
             >
               Fatto
-            </button>
+            </Bottone>
           )}
-          <button
-            className="text-etichetta text-danger-soft-text"
+          <Bottone
+            variante="fantasma"
+            misura="sm"
+            className="text-danger-soft-text"
             onClick={() => annulla.mutate(app.id)}
-            disabled={annulla.isPending}
+            caricamento={annulla.isPending}
           >
             Annulla
-          </button>
+          </Bottone>
         </div>
       </div>
       {/* Calendario, navigazione, promemoria: le scorciatoie del CRM 3.0. */}

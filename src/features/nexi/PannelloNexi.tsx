@@ -6,6 +6,7 @@ import { BarraSchede, Gruppo, type VoceScheda } from '@/components/ui/Schede'
 import { PilloleMultiple } from '@/components/ui/Pillole'
 import { BannerModifiche } from '@/components/ui/BannerModifiche'
 import { Caricamento, Errore } from '@/components/ui/Stato'
+import { Avviso } from '@/components/ui/Avviso'
 import { useBozza } from '@/lib/useBozza'
 import { useLeadNexi, useSalvaLeadNexi } from './queries'
 import {
@@ -31,12 +32,12 @@ import {
 type IdScheda = 'pos' | 'multipos' | 'amex' | 'costi' | 'operativita' | 'banca'
 
 const SCHEDE: VoceScheda<IdScheda>[] = [
-  { id: 'pos', etichetta: 'Anagrafica POS', icona: '💳' },
-  { id: 'multipos', etichetta: 'Multi-POS', icona: '🔀' },
-  { id: 'amex', etichetta: 'Amex', icona: '💎' },
-  { id: 'costi', etichetta: 'Costi POS', icona: '🧾' },
-  { id: 'operativita', etichetta: 'Operatività', icona: '📶' },
-  { id: 'banca', etichetta: 'Banca & Business', icona: '🏦' },
+  { id: 'pos', etichetta: 'Anagrafica POS', icona: 'pos' },
+  { id: 'multipos', etichetta: 'Multi-POS', icona: 'multipos' },
+  { id: 'amex', etichetta: 'Amex', icona: 'amex' },
+  { id: 'costi', etichetta: 'Costi POS', icona: 'costi' },
+  { id: 'operativita', etichetta: 'Operatività', icona: 'operativita' },
+  { id: 'banca', etichetta: 'Banca & Business', icona: 'banca' },
 ]
 
 export function PannelloNexi({ leadId }: { leadId: string }) {
@@ -149,9 +150,9 @@ function FormNexi({
             onChange={(v) => imposta('rateale_interessato', v)}
           />
           {bozza.rateale_interessato === true && (
-            <p className="rounded-card border border-success-soft-border bg-success-soft px-3 py-2 text-etichetta text-success-soft-text">
-              💡 Hey Light — proporre il servizio NEXI di pagamento rateale.
-            </p>
+            <Avviso tinta="successo" icona="suggerimento" titolo="Hey Light">
+              Proporre il servizio NEXI di pagamento rateale.
+            </Avviso>
           )}
           <Campo etichetta="Tasso di interesse attuale">
             {(id) => (
@@ -199,16 +200,16 @@ function FormNexi({
                 valore={bozza.amex_attivare}
                 onChange={(v) => imposta('amex_attivare', v)}
               />
-              <p className="rounded-card border border-success-soft-border bg-success-soft px-3 py-2 text-etichetta text-success-soft-text">
-                🎯 Attivazione gratuita · 0% sui primi 3.000 € · 0,90% fino a 50.000 € · 1,50%
-                oltre.
-              </p>
+              <Avviso tinta="successo" icona="target" titolo="Offerta Amex">
+                Attivazione gratuita · 0% sui primi 3.000 € · 0,90% fino a
+                50.000 € · 1,50% oltre.
+              </Avviso>
             </>
           )}
-          <p className="rounded-card border border-info-soft-border bg-info-soft px-3 py-2 text-etichetta text-info-soft-text">
-            Commissioni NEXI: esente fino a 3.000 € · 0,90% fino a 50.000 € · 1,50% oltre · Pay by
+          <Avviso icona="euro" titolo="Commissioni NEXI">
+            Esente fino a 3.000 € · 0,90% fino a 50.000 € · 1,50% oltre · Pay by
             Link 0,90% + 2,90 €/mese.
-          </p>
+          </Avviso>
         </Gruppo>
       )}
 
@@ -255,7 +256,7 @@ function FormNexi({
                   placeholder="0,00%"
                   value={commissioni[carta] ?? ''}
                   onChange={(e) => impostaCommissione(carta, e.target.value)}
-                  className="w-28 flex-shrink-0 rounded-card border border-bordo bg-superficie px-3 py-2 text-campo"
+                  className="w-28 shrink-0 superficie-card px-3 py-2 text-campo"
                 />
               </label>
             ))}

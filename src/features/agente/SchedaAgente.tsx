@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Segmentato } from '@/components/ui/Segmentato'
 import { Scheda } from '@/components/ui/Scheda'
 import { Campo, Input, Textarea } from '@/components/ui/Campo'
 import { BannerModifiche } from '@/components/ui/BannerModifiche'
@@ -144,22 +145,17 @@ export function SchedaMandati() {
 
   return (
     <Scheda titolo="Mandati commerciali" className="mb-4">
-      <div className="mb-3 flex gap-2">
-        {TUTTI_I_BRAND.map((b) => (
-          <button
-            key={b}
-            type="button"
-            onClick={() => setBrand(b)}
-            className={
-              brand === b
-                ? 'flex-1 rounded-card bg-info-soft-text px-3 py-2 text-campo font-medium text-white'
-                : 'flex-1 rounded-card border border-bordo bg-superficie px-3 py-2 text-campo text-testo-debole'
-            }
-          >
-            {BADGE_BRAND[b].etichetta}
-          </button>
-        ))}
-      </div>
+      <Segmentato
+        piena
+        className="mb-3"
+        etichetta="Brand del mandato"
+        valore={brand}
+        onChange={setBrand}
+        opzioni={TUTTI_I_BRAND.map((b) => ({
+          valore: b,
+          etichetta: BADGE_BRAND[b].etichetta,
+        }))}
+      />
 
       {mandati.isLoading && <Caricamento />}
       {mandati.isError && <Errore errore={mandati.error} />}

@@ -1,31 +1,32 @@
 import { useState } from 'react'
 import { ImportExcel } from './ImportExcel'
 import { ImportMail } from './ImportMail'
+import { TestataPagina } from '@/components/ui/Scheda'
+import { BarraSchede } from '@/components/ui/Schede'
 
 export function ImportPage() {
   const [tab, setTab] = useState<'excel' | 'mail'>('excel')
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-4 text-titolo font-semibold">Importa</h1>
+      <TestataPagina
+        titolo="Importa"
+        descrizione="Lavorazioni, appuntamenti e contatti non vengono mai toccati da un import (§8)."
+      />
 
-      <div className="mb-4 flex gap-2">
-        {(['excel', 'mail'] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={
-              tab === t
-                ? 'rounded-pillola bg-info-soft-text px-3 py-1.5 text-etichetta text-white'
-                : 'rounded-pillola border border-bordo bg-superficie px-3 py-1.5 text-etichetta text-testo-debole'
-            }
-          >
-            {t === 'excel' ? 'Excel aziendale' : 'Mail call center'}
-          </button>
-        ))}
+      <BarraSchede
+        voci={[
+          { id: 'excel', etichetta: 'Excel aziendale', icona: 'foglio' },
+          { id: 'mail', etichetta: 'Mail call center', icona: 'mail' },
+        ]}
+        attiva={tab}
+        onCambia={setTab}
+        etichetta="Sorgente da importare"
+      />
+
+      <div key={tab} className="animate-comparsa">
+        {tab === 'excel' ? <ImportExcel /> : <ImportMail />}
       </div>
-
-      {tab === 'excel' ? <ImportExcel /> : <ImportMail />}
     </div>
   )
 }

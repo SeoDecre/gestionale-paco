@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Scheda } from '@/components/ui/Scheda'
+import { Scheda, TestataPagina } from '@/components/ui/Scheda'
+import { Icona } from '@/components/ui/Icona'
 import { Input } from '@/components/ui/Campo'
 import { Pillola } from '@/components/ui/Pillola'
 import { Caricamento, Errore, Vuoto } from '@/components/ui/Stato'
@@ -44,15 +45,18 @@ export function AreePage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-titolo font-semibold">Aree</h1>
-        <p className="text-etichetta text-testo-debole">
-          {inZona} di {tutti.length} lead in una zona
-        </p>
-      </div>
+      <TestataPagina
+        titolo="Aree"
+        descrizione={
+          <span className="cifre">
+            {inZona} di {tutti.length} lead in una zona
+          </span>
+        }
+      />
 
       <Input
         type="search"
+        aria-label="Cerca per ragione sociale o comune"
         placeholder="Cerca per ragione sociale o comune…"
         value={cerca}
         onChange={(e) => setCerca(e.target.value)}
@@ -80,18 +84,24 @@ export function AreePage() {
             className="mb-3"
             titolo={
               <button
-                className="flex w-full items-center gap-2 text-left"
+                className="transizione-colore flex w-full items-center gap-2 text-left hover:text-info-soft-text"
                 onClick={() => setAperte((p) => ({ ...p, [g.id]: !aperto }))}
                 aria-expanded={aperto}
               >
-                <span aria-hidden className="text-testo-debole">
-                  {aperto ? '▾' : '▸'}
-                </span>
+                {/* Una sola icona che ruota, invece di due glifi diversi: il
+                    movimento dice "si e' aperto", due caratteri no. */}
+                <Icona
+                  nome="successivo"
+                  misura="sm"
+                  className={`transizione-trasformazione text-testo-debole ${
+                    aperto ? 'rotate-90' : ''
+                  }`}
+                />
                 {g.nome}
               </button>
             }
             azione={
-              <span className="flex flex-shrink-0 items-center gap-1.5">
+              <span className="flex shrink-0 items-center gap-1.5">
                 {targetAlti > 0 && <Pillola tinta="successo">{targetAlti} A/E</Pillola>}
                 <span className="text-etichetta font-medium text-testo-debole">
                   {g.lead.length}
@@ -108,7 +118,7 @@ export function AreePage() {
                     <li key={l.id}>
                       <Link
                         to={`/lead/${l.id}`}
-                        className="flex items-center justify-between gap-2 rounded-card border border-bordo px-3 py-2"
+                        className="premibile-ampio flex items-center justify-between gap-2 rounded-card border border-bordo px-3 py-2 hover:border-bordo-forte hover:bg-superficie-alt"
                       >
                         <span className="min-w-0">
                           <span className="block truncate text-campo font-medium">
@@ -120,7 +130,7 @@ export function AreePage() {
                             </span>
                           )}
                         </span>
-                        <span className="flex flex-shrink-0 items-center gap-1">
+                        <span className="flex shrink-0 items-center gap-1">
                           {l.target && <Pillola tinta="avviso">{l.target}</Pillola>}
                           {l.lead_brand.map((b) => (
                             <Pillola key={b.brand} tinta={BADGE_BRAND[b.brand].tinta}>

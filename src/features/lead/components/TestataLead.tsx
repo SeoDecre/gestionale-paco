@@ -1,4 +1,7 @@
 import { Pillola } from '@/components/ui/Pillola'
+import { Chip } from '@/components/ui/Chip'
+import { BottoneIcona } from '@/components/ui/Bottone'
+import { Icona } from '@/components/ui/Icona'
 import { urlMappa, indirizzoCompleto } from '@/lib/maps'
 import type { Enum } from '@/types/db'
 import type { LeadConBrand } from '../api'
@@ -23,7 +26,13 @@ export function TestataLead({ lead }: { lead: LeadConBrand }) {
       <h1 className="text-titolo font-semibold">{lead.ragione_sociale}</h1>
 
       {mappa && (
-        <a href={mappa} className="mt-1 inline-block text-etichetta text-info-soft-text underline">
+        <a
+          href={mappa}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="transizione-colore mt-1 inline-flex items-center gap-1 text-etichetta text-info-soft-text hover:underline"
+        >
+          <Icona nome="mappa" misura="sm" />
           {indirizzoCompleto(lead)}
         </a>
       )}
@@ -37,28 +46,29 @@ export function TestataLead({ lead }: { lead: LeadConBrand }) {
           const b = BADGE_BRAND[brand]
           if (stato == null) {
             return (
-              <button
+              <Chip
                 key={brand}
+                tratteggiato
+                icona="aggiungi"
                 onClick={() => aggiungi.mutate(brand)}
                 disabled={aggiungi.isPending}
-                className="rounded-pillola border border-dashed border-bordo px-3 py-1 text-etichetta text-testo-debole"
               >
-                ＋ {b.etichetta}
-              </button>
+                {b.etichetta}
+              </Chip>
             )
           }
           return (
             <span key={brand} className="inline-flex items-center gap-1">
               <Pillola tinta={b.tinta}>{b.etichetta}</Pillola>
-              <Pillola tinta={BADGE_STATO[stato].tinta}>{BADGE_STATO[stato].etichetta}</Pillola>
-              <button
+              <Pillola tinta={BADGE_STATO[stato].tinta}>
+                {BADGE_STATO[stato].etichetta}
+              </Pillola>
+              <BottoneIcona
+                nome="chiudi"
+                etichetta={`Rimuovi ${b.etichetta}`}
                 onClick={() => rimuovi.mutate(brand)}
                 disabled={rimuovi.isPending}
-                aria-label={`Rimuovi ${b.etichetta}`}
-                className="px-1 text-testo-debole"
-              >
-                ✕
-              </button>
+              />
             </span>
           )
         })}

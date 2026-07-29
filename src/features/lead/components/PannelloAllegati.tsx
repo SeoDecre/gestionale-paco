@@ -1,7 +1,9 @@
 import { useRef, useState, type ChangeEvent } from 'react'
 import { Scheda } from '@/components/ui/Scheda'
-import { Bottone } from '@/components/ui/Bottone'
+import { Bottone, BottoneIcona } from '@/components/ui/Bottone'
 import { Pillola } from '@/components/ui/Pillola'
+import { Icona, type NomeIcona } from '@/components/ui/Icona'
+import { Avviso } from '@/components/ui/Avviso'
 import { Caricamento, Errore, Vuoto } from '@/components/ui/Stato'
 import { formattaDurata, formattaDataOra } from '@/lib/format'
 import { messaggioErrore } from '@/lib/errors'
@@ -10,10 +12,10 @@ import type { Enum, Riga } from '@/types/db'
 import { useAllegati, useCreaAllegato, useEliminaAllegato } from '../queries'
 import { useRegistratore } from '../useRegistratore'
 
-const ICONA: Record<Enum<'tipo_allegato'>, string> = {
-  audio: '🎙️',
-  foto: '📷',
-  documento: '📄',
+const ICONA: Record<Enum<'tipo_allegato'>, NomeIcona> = {
+  audio: 'microfono',
+  foto: 'foto',
+  documento: 'documento',
 }
 
 export function PannelloAllegati({ leadId }: { leadId: string }) {
@@ -70,30 +72,56 @@ export function PannelloAllegati({ leadId }: { leadId: string }) {
   }
 
   return (
-    <Scheda titolo="Allegati" className="mb-4">
+    <Scheda titolo="Allegati" icona="allegato" className="mb-4">
       <div className="mb-3 flex gap-2">
         {reg.stato === 'in_corso' ? (
-          <Bottone variante="registrazione" piena onClick={fermaEcarica} disabled={inCorso}>
-            ⏺ Ferma ({formattaDurata(reg.secondi)})
+          <Bottone
+            variante="registrazione"
+            piena
+            icona="microfono"
+            onClick={fermaEcarica}
+            disabled={inCorso}
+          >
+            {/* `cifre` sul cronometro: senza, i secondi fanno saltare la
+                larghezza del bottone a ogni tick mentre si registra. */}
+            Ferma (<span className="cifre">{formattaDurata(reg.secondi)}</span>)
           </Bottone>
         ) : (
-          <Bottone variante="registrazione" onClick={reg.avvia} disabled={inCorso}>
-            🎙️ Memo vocale
+          <Bottone
+            variante="registrazione"
+            icona="microfono"
+            onClick={reg.avvia}
+            disabled={inCorso}
+          >
+            Memo vocale
           </Bottone>
         )}
-        <Bottone variante="registrazione" onClick={() => fileRef.current?.click()} disabled={inCorso}>
-          📷 Foto / doc.
+        <Bottone
+          variante="registrazione"
+          icona="foto"
+          onClick={() => fileRef.current?.click()}
+          disabled={inCorso}
+        >
+          Foto / doc.
         </Bottone>
-        <input ref={fileRef} type="file" accept="image/*,application/pdf" hidden onChange={onFile} />
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*,application/pdf"
+          hidden
+          onChange={onFile}
+        />
       </div>
 
-      {reg.errore && <p className="mb-2 text-etichetta text-danger-soft-text">{reg.errore}</p>}
-      {errore && <p className="mb-2 text-etichetta text-danger-soft-text">{errore}</p>}
-      {inCorso && <p className="mb-2 text-etichetta text-testo-debole">Caricamento…</p>}
+      {reg.errore && <Avviso tinta="pericolo" className="mb-2">{reg.errore}</Avviso>}
+      {errore && <Avviso tinta="pericolo" className="mb-2">{errore}</Avviso>}
+      {inCorso && <Caricamento testo="Caricamento…" />}
 
       {allegati.isLoading && <Caricamento />}
       {allegati.isError && <Errore errore={allegati.error} />}
-      {allegati.data && allegati.data.length === 0 && <Vuoto testo="Nessun allegato." />}
+      {allegati.data && allegati.data.length === 0 && (
+        <Vuoto icona="allegato" testo="Nessun allegato." />
+      )}
 
       <ul className="flex flex-col gap-2">
         {allegati.data?.map((a) => (
@@ -119,33 +147,39 @@ function RigaAllegato({ leadId, allegato }: { leadId: string; allegato: Riga<'al
   }
 
   return (
-    <li className="flex items-center justify-between gap-2 rounded-card border border-bordo px-3 py-2">
-      <button className="flex min-w-0 items-center gap-2 text-left" onClick={apri} disabled={apertura}>
-        <span>{ICONA[allegato.tipo]}</span>
+    <li className="transizione-colore flex items-center justify-between gap-2 rounded-card border border-bordo px-3 py-2 hover:border-bordo-forte">
+      <button
+        className="premibile flex min-w-0 items-center gap-2 text-left"
+        onClick={apri}
+        disabled={apertura}
+      >
+        <Icona nome={ICONA[allegato.tipo]} className="text-testo-debole" />
         <span className="min-w-0">
-          <span className="block truncate text-campo text-info-soft-text underline">
+          <span className="block truncate text-campo text-info-soft-text">
             {allegato.nome_file ?? allegato.tipo}
           </span>
           <span className="block text-etichetta text-testo-debole">
-            {allegato.durata_sec != null && `${formattaDurata(allegato.durata_sec)} · `}
+            {allegato.durata_sec != null &&
+              `${formattaDurata(allegato.durata_sec)} · `}
             {formattaDataOra(allegato.created_at)}
           </span>
         </span>
       </button>
-      <div className="flex flex-shrink-0 items-center gap-1.5">
+      <div className="flex shrink-0 items-center gap-1.5">
         {allegato.stato && (
-          <Pillola tinta={allegato.stato === 'integrato' ? 'successo' : 'avviso'}>
+          <Pillola
+            tinta={allegato.stato === 'integrato' ? 'successo' : 'avviso'}
+          >
             {allegato.stato === 'integrato' ? 'Integrato' : 'Da integrare'}
           </Pillola>
         )}
-        <button
-          aria-label="Elimina allegato"
-          className="px-1 text-danger-soft-text"
+        <BottoneIcona
+          nome="elimina"
+          etichetta={`Elimina ${allegato.nome_file ?? 'allegato'}`}
+          className="text-danger-soft-text"
           onClick={() => elimina.mutate(allegato.id)}
           disabled={elimina.isPending}
-        >
-          ✕
-        </button>
+        />
       </div>
     </li>
   )

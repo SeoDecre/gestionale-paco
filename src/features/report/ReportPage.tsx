@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Scheda } from '@/components/ui/Scheda'
-import { Bottone } from '@/components/ui/Bottone'
+import { Scheda, TestataPagina } from '@/components/ui/Scheda'
+import { Bottone, BottoneIcona } from '@/components/ui/Bottone'
 import { Input, Select } from '@/components/ui/Campo'
 import { Pillola } from '@/components/ui/Pillola'
 import { Caricamento, Errore } from '@/components/ui/Stato'
@@ -47,7 +47,10 @@ export function ReportPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-4 text-titolo font-semibold">Report</h1>
+      <TestataPagina
+        titolo="Report"
+        descrizione="Filtri combinabili, esportazione Excel e condivisione (§12/§13)."
+      />
 
       {dataset.isLoading && <Caricamento />}
       {dataset.isError && <Errore errore={dataset.error} />}
@@ -92,9 +95,15 @@ export function ReportPage() {
           </Select>
         </div>
         {Object.keys(filtri).length > 0 && (
-          <button className="mt-2 text-etichetta text-info-soft-text" onClick={() => setFiltri({})}>
+          <Bottone
+            variante="fantasma"
+            misura="sm"
+            icona="chiudi"
+            className="mt-2 text-info-soft-text"
+            onClick={() => setFiltri({})}
+          >
             Azzera filtri
-          </button>
+          </Bottone>
         )}
       </Scheda>
 
@@ -241,19 +250,26 @@ function PannelloExport({
         </div>
         <ul className="mt-2 flex flex-col gap-1">
           {liste.data?.map((l) => (
-            <li key={l.id} className="flex items-center justify-between gap-2 text-etichetta">
+            <li
+              key={l.id}
+              className="transizione-colore flex items-center justify-between gap-2 rounded-card px-2 text-etichetta hover:bg-superficie-alt"
+            >
               <button
-                className="text-info-soft-text"
+                className="transizione-colore flex-1 text-left text-info-soft-text hover:underline"
                 onClick={() => {
                   setFiltri((l.filtri ?? {}) as FiltriLead)
-                  if (Array.isArray(l.colonne_export)) setColonne(l.colonne_export as string[])
+                  if (Array.isArray(l.colonne_export))
+                    setColonne(l.colonne_export as string[])
                 }}
               >
                 {l.nome}
               </button>
-              <button className="text-danger-soft-text" onClick={() => elimina.mutate(l.id)}>
-                ✕
-              </button>
+              <BottoneIcona
+                nome="elimina"
+                etichetta={`Elimina la lista "${l.nome}"`}
+                className="text-danger-soft-text"
+                onClick={() => elimina.mutate(l.id)}
+              />
             </li>
           ))}
         </ul>

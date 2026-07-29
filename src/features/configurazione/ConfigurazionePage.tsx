@@ -9,6 +9,7 @@ import { NotificheCard } from '@/features/notifiche/NotificheCard'
 import { SchedaAgente, SchedaMandati } from '@/features/agente/SchedaAgente'
 import { BackupCard } from '@/features/backup/BackupCard'
 import { BarraSchede, type VoceScheda } from '@/components/ui/Schede'
+import { TestataPagina } from '@/components/ui/Scheda'
 
 type Sezione =
   | 'agente'
@@ -21,14 +22,14 @@ type Sezione =
   | 'backup'
 
 const SEZIONI: VoceScheda<Sezione>[] = [
-  { id: 'agente', etichetta: 'Agente & Mandati', icona: '🪪' },
-  { id: 'offerte', etichetta: 'Offerte', icona: '📄' },
-  { id: 'target', etichetta: 'Target', icona: '🎯' },
-  { id: 'zone', etichetta: 'Zone', icona: '🗺️' },
-  { id: 'vocabolari', etichetta: 'Vocabolari', icona: '🏷️' },
-  { id: 'campi', etichetta: 'Campi per brand', icona: '🧩' },
-  { id: 'notifiche', etichetta: 'Notifiche', icona: '🔔' },
-  { id: 'backup', etichetta: 'Backup', icona: '🛡️' },
+  { id: 'agente', etichetta: 'Agente & Mandati', icona: 'agente' },
+  { id: 'offerte', etichetta: 'Offerte', icona: 'offerte' },
+  { id: 'target', etichetta: 'Target', icona: 'target' },
+  { id: 'zone', etichetta: 'Zone', icona: 'zone' },
+  { id: 'vocabolari', etichetta: 'Vocabolari', icona: 'vocabolari' },
+  { id: 'campi', etichetta: 'Campi per brand', icona: 'campi' },
+  { id: 'notifiche', etichetta: 'Notifiche', icona: 'notifiche' },
+  { id: 'backup', etichetta: 'Backup', icona: 'backup' },
 ]
 
 export function ConfigurazionePage() {
@@ -36,10 +37,21 @@ export function ConfigurazionePage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-4 text-titolo font-semibold">Configurazione azienda</h1>
+      <TestataPagina
+        titolo="Configurazione azienda"
+        descrizione="Vocabolari, offerte, zone e parametri che alimentano il resto dell'app."
+      />
 
-      <BarraSchede voci={SEZIONI} attiva={sezione} onCambia={setSezione} />
+      <BarraSchede
+        voci={SEZIONI}
+        attiva={sezione}
+        onCambia={setSezione}
+        etichetta="Sezioni della configurazione"
+      />
 
+      {/* `key` sulla sezione: rimontando, il contenuto entra con la sua
+          animazione invece di sostituirsi di scatto sotto le schede. */}
+      <div key={sezione} className="animate-comparsa flex flex-col gap-4">
       {sezione === 'agente' && (
         <>
           <SchedaAgente />
@@ -68,6 +80,7 @@ export function ConfigurazionePage() {
       {sezione === 'campi' && <EditorCampiPersonalizzati />}
       {sezione === 'notifiche' && <NotificheCard />}
       {sezione === 'backup' && <BackupCard />}
+      </div>
     </div>
   )
 }

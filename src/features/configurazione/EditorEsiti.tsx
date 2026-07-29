@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Scheda } from '@/components/ui/Scheda'
-import { Bottone } from '@/components/ui/Bottone'
+import { Bottone, BottoneIcona } from '@/components/ui/Bottone'
 import { Input } from '@/components/ui/Campo'
 import { Pillola } from '@/components/ui/Pillola'
 import { Caricamento, Errore } from '@/components/ui/Stato'
@@ -116,14 +116,13 @@ function RigaEsito({ esito }: { esito: Esito }) {
         />
         Attivo
       </label>
-      <button
-        aria-label="Elimina esito"
-        className="px-1 text-danger-soft-text"
-        onClick={() => elimina.mutate(esito.id)}
-        disabled={elimina.isPending}
-      >
-        ✕
-      </button>
+      <BottoneIcona
+          nome="elimina"
+          etichetta="Elimina esito"
+          className="text-danger-soft-text"
+          onClick={() => elimina.mutate(esito.id)}
+          disabled={elimina.isPending}
+        />
     </li>
   )
 }

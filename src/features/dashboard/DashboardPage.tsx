@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
-import { Scheda } from '@/components/ui/Scheda'
+import { Scheda, TestataPagina } from '@/components/ui/Scheda'
 import { Pillola } from '@/components/ui/Pillola'
+import { Icona } from '@/components/ui/Icona'
 import { Caricamento, Errore, Vuoto } from '@/components/ui/Stato'
 import { formattaOra, formattaData } from '@/lib/format'
 import { urlPercorso, indirizzoCompleto } from '@/lib/maps'
@@ -35,7 +36,10 @@ export function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <h1 className="mb-4 text-titolo font-semibold">Oggi</h1>
+      <TestataPagina
+        titolo="Oggi"
+        descrizione={formattaData(new Date().toISOString())}
+      />
 
       {/* ------------------------------------------------------------- KPI */}
       <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -115,14 +119,16 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Scheda
           titolo="Appuntamenti di oggi"
+          icona="agenda"
           azione={
             percorso && attivi.length > 1 ? (
               <a
                 href={percorso}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-etichetta text-info-soft-text"
+                className="transizione-colore inline-flex items-center gap-1 text-etichetta font-medium text-info-soft-text hover:underline"
               >
+                <Icona nome="naviga" misura="sm" />
                 Apri percorso
               </a>
             ) : undefined
@@ -130,7 +136,9 @@ export function DashboardPage() {
         >
           {appuntamenti.isLoading && <Caricamento />}
           {appuntamenti.isError && <Errore errore={appuntamenti.error} />}
-          {attivi.length === 0 && <Vuoto testo="Nessun appuntamento oggi." />}
+          {!appuntamenti.isLoading && attivi.length === 0 && (
+            <Vuoto icona="agenda" testo="Nessun appuntamento oggi." />
+          )}
           <ul className="flex flex-col gap-2">
             {attivi.map((a) => (
               <RigaAppuntamento key={a.id} app={a} />
@@ -138,11 +146,11 @@ export function DashboardPage() {
           </ul>
         </Scheda>
 
-        <Scheda titolo="Ultime lavorazioni">
+        <Scheda titolo="Ultime lavorazioni" icona="orologio">
           {ultime.isLoading && <Caricamento />}
           {ultime.isError && <Errore errore={ultime.error} />}
           {ultime.data && ultime.data.length === 0 && (
-            <Vuoto testo="Nessuna lavorazione registrata." />
+            <Vuoto icona="orologio" testo="Nessuna lavorazione registrata." />
           )}
           <ul className="flex flex-col gap-2">
             {ultime.data?.map((l) => (
@@ -177,10 +185,16 @@ function Kpi({
   tinta: Tinta
 }) {
   return (
-    <div className="rounded-card border border-bordo bg-superficie p-3 text-center">
-      <p className={`text-titolo font-semibold ${COLORE[tinta]}`}>{valore}</p>
+    <div className="superficie-card p-3 text-center">
+      {/* `cifre` = cifre a larghezza fissa: senza, il numero balla ogni volta
+          che cambia di una unita' e l'occhio lo segue invece di leggerlo. */}
+      <p className={`cifre text-cifra font-semibold ${COLORE[tinta]}`}>
+        {valore}
+      </p>
       <p className="text-etichetta text-testo-debole">{etichetta}</p>
-      {nota && <p className="mt-0.5 text-etichetta text-testo-debole opacity-70">{nota}</p>}
+      {nota && (
+        <p className="mt-0.5 text-etichetta text-testo-tenue">{nota}</p>
+      )}
     </div>
   )
 }
@@ -200,10 +214,22 @@ function Tile({
   return (
     <Link
       to={a}
-      className="rounded-card border border-bordo bg-superficie p-3 text-center hover:border-info-soft-border"
+      className="superficie-card premibile-ampio group block p-3 text-center hover:border-bordo-forte hover:bg-superficie-alt"
     >
-      <p className={`text-titolo font-semibold ${COLORE[tinta]}`}>{valore ?? '—'}</p>
-      <p className="text-etichetta text-testo-debole">{etichetta}</p>
+      <p className={`cifre text-cifra font-semibold ${COLORE[tinta]}`}>
+        {valore ?? '—'}
+      </p>
+      <p className="flex items-center justify-center gap-0.5 text-etichetta text-testo-debole">
+        {etichetta}
+        {/* La freccia dice che la piastrella e' un varco verso la lista, non
+            solo un numero. Compare al passaggio del mouse per non fare
+            rumore su otto piastrelle in fila. */}
+        <Icona
+          nome="successivo"
+          misura="sm"
+          className="transizione-opacita opacity-0 group-hover:opacity-100"
+        />
+      </p>
     </Link>
   )
 }
@@ -211,21 +237,32 @@ function Tile({
 function RigaAppuntamento({ app }: { app: AppuntamentoConLead }) {
   const indirizzo = app.lead ? indirizzoCompleto(app.lead) : ''
   return (
-    <li className="flex items-center justify-between gap-3 rounded-card border border-bordo px-3 py-2">
+    <li className="transizione-colore flex items-center justify-between gap-3 rounded-card border border-bordo px-3 py-2 hover:border-bordo-forte hover:bg-superficie-alt">
       <div className="min-w-0">
         <p className="text-campo font-medium">
-          <span className="text-info-soft-text">{formattaOra(app.inizio)}</span>{' '}
+          <span className="cifre text-info-soft-text">
+            {formattaOra(app.inizio)}
+          </span>{' '}
           {app.lead ? (
-            <Link to={`/lead/${app.lead_id}`} className="underline">
+            <Link
+              to={`/lead/${app.lead_id}`}
+              className="transizione-colore hover:text-info-soft-text hover:underline"
+            >
               {app.lead.ragione_sociale}
             </Link>
           ) : (
             'Appuntamento'
           )}
         </p>
-        {indirizzo && <p className="truncate text-etichetta text-testo-debole">{indirizzo}</p>}
+        {indirizzo && (
+          <p className="truncate text-etichetta text-testo-debole">{indirizzo}</p>
+        )}
       </div>
-      {app.stato === 'fatto' && <Pillola tinta="successo">Fatto</Pillola>}
+      {app.stato === 'fatto' && (
+        <Pillola tinta="successo" icona="successo">
+          Fatto
+        </Pillola>
+      )}
     </li>
   )
 }
@@ -234,14 +271,28 @@ function RigaLavorazione({ lav }: { lav: UltimaLavorazione }) {
   const e = lav.esiti_lavorazione
   const tinta = e?.is_chiusura ? (e.esito_positivo ? 'successo' : 'pericolo') : 'info'
   return (
-    <li className="flex items-center justify-between gap-2 rounded-card border border-bordo px-3 py-2">
+    <li className="transizione-colore flex items-center justify-between gap-2 rounded-card border border-bordo px-3 py-2 hover:border-bordo-forte hover:bg-superficie-alt">
       <div className="min-w-0">
-        <Link to={`/lead/${lav.lead_id}`} className="block truncate text-campo font-medium underline">
+        <Link
+          to={`/lead/${lav.lead_id}`}
+          className="transizione-colore block truncate text-campo font-medium hover:text-info-soft-text hover:underline"
+        >
           {lav.lead?.ragione_sociale ?? 'Lead'}
         </Link>
-        <p className="text-etichetta text-testo-debole">{formattaData(lav.data_ora)}</p>
+        <p className="text-etichetta text-testo-debole">
+          {formattaData(lav.data_ora)}
+        </p>
       </div>
-      {e && <Pillola tinta={tinta}>{e.nome}</Pillola>}
+      {e && (
+        <Pillola
+          tinta={tinta}
+          icona={
+            e.is_chiusura ? (e.esito_positivo ? 'successo' : 'errore') : undefined
+          }
+        >
+          {e.nome}
+        </Pillola>
+      )}
     </li>
   )
 }

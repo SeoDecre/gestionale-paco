@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Scheda } from '@/components/ui/Scheda'
-import { Bottone } from '@/components/ui/Bottone'
+import { Bottone, BottoneIcona } from '@/components/ui/Bottone'
 import { Input } from '@/components/ui/Campo'
 import { Caricamento, Errore, Vuoto } from '@/components/ui/Stato'
 import {
@@ -110,14 +110,13 @@ function RigaVoce({
         />
         Attivo
       </label>
-      <button
-        aria-label="Elimina voce"
-        className="px-1 text-danger-soft-text"
-        onClick={() => elimina.mutate(voce.id)}
-        disabled={elimina.isPending}
-      >
-        ✕
-      </button>
+      <BottoneIcona
+          nome="elimina"
+          etichetta="Elimina voce"
+          className="text-danger-soft-text"
+          onClick={() => elimina.mutate(voce.id)}
+          disabled={elimina.isPending}
+        />
     </li>
   )
 }

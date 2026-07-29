@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react'
+import { Avviso } from '@/components/ui/Avviso'
+import { Segmentato } from '@/components/ui/Segmentato'
 import { Scheda } from '@/components/ui/Scheda'
-import { Bottone } from '@/components/ui/Bottone'
+import { Bottone, BottoneIcona } from '@/components/ui/Bottone'
 import { Campo, Input, Select } from '@/components/ui/Campo'
 import { Pillola } from '@/components/ui/Pillola'
 import { Caricamento, Errore, Vuoto } from '@/components/ui/Stato'
@@ -31,27 +33,23 @@ export function EditorCampiPersonalizzati() {
 
   return (
     <Scheda titolo="Campi personalizzati per brand" className="mb-4">
-      <p className="mb-3 rounded-card border border-info-soft-border bg-info-soft px-3 py-2 text-etichetta text-info-soft-text">
-        Le domande definite qui compaiono nella scheda dei lead del brand scelto. Servono per le
-        domande che cambiano con la campagna commerciale: i campi standard restano dove sono.
-      </p>
+      <Avviso className="mb-3">
+        Le domande definite qui compaiono nella scheda dei lead del brand
+        scelto. Servono per le domande che cambiano con la campagna
+        commerciale: i campi standard restano dove sono.
+      </Avviso>
 
-      <div className="mb-3 flex gap-2">
-        {TUTTI_I_BRAND.map((b) => (
-          <button
-            key={b}
-            type="button"
-            onClick={() => setBrand(b)}
-            className={
-              brand === b
-                ? 'flex-1 rounded-card bg-info-soft-text px-3 py-2 text-campo font-medium text-white'
-                : 'flex-1 rounded-card border border-bordo bg-superficie px-3 py-2 text-campo text-testo-debole'
-            }
-          >
-            {BADGE_BRAND[b].etichetta}
-          </button>
-        ))}
-      </div>
+      <Segmentato
+        piena
+        className="mb-3"
+        etichetta="Brand dei campi personalizzati"
+        valore={brand}
+        onChange={setBrand}
+        opzioni={TUTTI_I_BRAND.map((b) => ({
+          valore: b,
+          etichetta: BADGE_BRAND[b].etichetta,
+        }))}
+      />
 
       <FormNuovoCampo brand={brand} ordineIniziale={(campi.data?.length ?? 0) * 10} />
 
@@ -181,26 +179,32 @@ function RigaCampo({ campo }: { campo: Riga<'campi_config'> }) {
             {opzioni.length > 0 && ` · ${opzioni.join(', ')}`}
           </p>
         </div>
-        <div className="flex flex-shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {!campo.attivo && <Pillola tinta="neutro">Spento</Pillola>}
           {campo.attivo ? (
-            <button
-              className="text-etichetta text-testo-debole"
+            <Bottone
+              variante="fantasma"
+              misura="sm"
               onClick={() => disattiva.mutate(campo.id)}
             >
               Spegni
-            </button>
+            </Bottone>
           ) : (
-            <button
-              className="text-etichetta text-info-soft-text"
-              onClick={() => aggiorna.mutate({ id: campo.id, patch: { attivo: true } })}
+            <Bottone
+              variante="fantasma"
+              misura="sm"
+              className="text-info-soft-text"
+              onClick={() =>
+                aggiorna.mutate({ id: campo.id, patch: { attivo: true } })
+              }
             >
               Riattiva
-            </button>
+            </Bottone>
           )}
-          <button
-            aria-label="Elimina campo"
-            className="px-1 text-danger-soft-text"
+          <BottoneIcona
+            nome="elimina"
+            etichetta={`Elimina il campo "${campo.etichetta}"`}
+            className="text-danger-soft-text"
             onClick={() => {
               if (
                 confirm(
@@ -210,9 +214,7 @@ function RigaCampo({ campo }: { campo: Riga<'campi_config'> }) {
                 elimina.mutate(campo.id)
               }
             }}
-          >
-            ✕
-          </button>
+          />
         </div>
       </div>
     </li>

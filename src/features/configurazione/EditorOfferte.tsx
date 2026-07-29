@@ -1,6 +1,6 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Scheda } from '@/components/ui/Scheda'
-import { Bottone } from '@/components/ui/Bottone'
+import { Bottone, BottoneIcona } from '@/components/ui/Bottone'
 import { Campo, Input, Select, Textarea } from '@/components/ui/Campo'
 import { Pillola } from '@/components/ui/Pillola'
 import { Caricamento, Errore, Vuoto } from '@/components/ui/Stato'
@@ -30,9 +30,14 @@ export function EditorOfferte() {
     <Scheda
       titolo="Offerte"
       azione={
-        <button className="text-etichetta text-info-soft-text" onClick={() => setNuovo((v) => !v)}>
-          {nuovo ? 'Chiudi' : '＋ Nuova'}
-        </button>
+        <Bottone
+            variante="fantasma"
+            misura="sm"
+            icona={nuovo ? 'chiudi' : 'aggiungi'}
+            onClick={() => setNuovo((v) => !v)}
+          >
+            {nuovo ? 'Chiudi' : 'Nuova'}
+          </Bottone>
       }
       className="mb-4"
     >
@@ -85,10 +90,16 @@ function RigaOfferta({ offerta }: { offerta: Riga<'offerte'> }) {
             <BottonePdfOfferta path={offerta.pdf_path} />
           </p>
         </div>
-        <div className="flex flex-shrink-0 items-center gap-2">
-          <button className="text-etichetta text-info-soft-text" onClick={() => setModifica(true)}>
+        <div className="flex shrink-0 items-center gap-2">
+          <Bottone
+            variante="fantasma"
+            misura="sm"
+            icona="modifica"
+            className="text-info-soft-text"
+            onClick={() => setModifica(true)}
+          >
             Modifica
-          </button>
+          </Bottone>
           {offerta.stato === 'attiva' && (
             <button
               className="text-etichetta text-testo-debole"
@@ -97,13 +108,12 @@ function RigaOfferta({ offerta }: { offerta: Riga<'offerte'> }) {
               Archivia
             </button>
           )}
-          <button
-            aria-label="Elimina offerta"
-            className="text-danger-soft-text"
-            onClick={() => elimina.mutate(offerta.id)}
-          >
-            ✕
-          </button>
+          <BottoneIcona
+              nome="chiudi"
+              etichetta="Elimina offerta"
+              className="text-danger-soft-text"
+              onClick={() => elimina.mutate(offerta.id)}
+            />
         </div>
       </div>
     </li>
@@ -313,6 +323,7 @@ function FormOfferta({
       </Campo>
       <Bottone
         variante="secondario"
+        icona="magia"
         disabled={!testoEstratto.trim()}
         onClick={() => {
           const p = estraiParametriOfferta(testoEstratto)
@@ -322,7 +333,7 @@ function FormOfferta({
           if (p.transato_max != null) setTransatoMax(String(p.transato_max))
         }}
       >
-        ✨ Ricava i parametri dal testo
+        Ricava i parametri dal testo
       </Bottone>
 
       <Campo etichetta="PDF originale">
@@ -339,16 +350,18 @@ function FormOfferta({
             {nomePdf && <span className="text-etichetta text-testo-debole">{nomePdf}</span>}
             <BottonePdfOfferta path={pdfPath} etichetta="Apri PDF" />
             {pdfPath && (
-              <button
-                type="button"
-                className="text-etichetta text-danger-soft-text"
+              <Bottone
+                variante="fantasma"
+                misura="sm"
+                icona="elimina"
+                className="text-danger-soft-text"
                 onClick={() => {
                   setPdfPath(null)
                   setNomePdf(null)
                 }}
               >
                 Rimuovi
-              </button>
+              </Bottone>
             )}
             {errorePdf && <span className="text-etichetta text-danger-soft-text">{errorePdf}</span>}
           </div>

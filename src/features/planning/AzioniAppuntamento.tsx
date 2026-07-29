@@ -11,6 +11,7 @@ import {
 } from '@/lib/condivisione'
 import { formattaData } from '@/lib/format'
 import { BADGE_BRAND } from '@/features/lead/brand'
+import { Icona, type NomeIcona } from '@/components/ui/Icona'
 import type { AppuntamentoConLead } from './api'
 
 /**
@@ -54,7 +55,7 @@ export function AzioniAppuntamento({
   const azioni = [
     {
       etichetta: 'Calendario',
-      icona: '📅',
+      icona: 'agenda',
       titolo: 'Scarica .ics',
       onClick: () =>
         scaricaTesto(
@@ -65,19 +66,19 @@ export function AzioniAppuntamento({
     },
     {
       etichetta: 'Google',
-      icona: '🗓️',
+      icona: 'settimana',
       titolo: 'Aggiungi a Google Calendar',
       onClick: () => apriEsterno(urlGoogleCalendar(dati, cliente)),
     },
     mappa && {
       etichetta: 'Naviga',
-      icona: '🧭',
+      icona: 'naviga',
       titolo: 'Apri la navigazione',
       onClick: () => apriEsterno(mappa),
     },
     {
       etichetta: 'Mail',
-      icona: '✉️',
+      icona: 'mail',
       titolo: 'Manda il promemoria per mail',
       // mailto: deve navigare nella stessa scheda, altrimenti resta aperta
       // una finestra vuota dopo l'apertura del client di posta.
@@ -87,11 +88,16 @@ export function AzioniAppuntamento({
     },
     {
       etichetta: 'WhatsApp',
-      icona: '💬',
+      icona: 'messaggio',
       titolo: 'Manda il promemoria su WhatsApp',
       onClick: () => apriEsterno(urlWhatsApp(testo)),
     },
-  ].filter(Boolean) as { etichetta: string; icona: string; titolo: string; onClick: () => void }[]
+  ].filter(Boolean) as {
+    etichetta: string
+    icona: NomeIcona
+    titolo: string
+    onClick: () => void
+  }[]
 
   return (
     <div className="flex flex-wrap gap-1">
@@ -100,13 +106,16 @@ export function AzioniAppuntamento({
           key={a.etichetta}
           type="button"
           title={a.titolo}
+          /* L'etichetta accessibile e' quella lunga ("Manda il promemoria su
+             WhatsApp") anche quando a schermo si vede solo l'icona: in modo
+             compatto e' l'unica descrizione disponibile. */
           aria-label={a.titolo}
           onClick={a.onClick}
-          className={`inline-flex items-center gap-1 rounded-card border border-bordo bg-superficie text-etichetta text-testo-debole ${
-            compatto ? 'min-h-9 px-2' : 'min-h-11 px-2.5'
+          className={`premibile inline-flex min-h-11 items-center gap-1.5 superficie-card text-etichetta text-testo-debole hover:border-bordo-forte hover:text-testo ${
+            compatto ? 'px-2.5' : 'px-3'
           }`}
         >
-          <span aria-hidden>{a.icona}</span>
+          <Icona nome={a.icona} misura="sm" />
           {!compatto && <span>{a.etichetta}</span>}
         </button>
       ))}

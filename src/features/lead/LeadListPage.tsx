@@ -1,10 +1,13 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { Bottone } from '@/components/ui/Bottone'
-import { Input, Select } from '@/components/ui/Campo'
+import { Campo, Input, Select } from '@/components/ui/Campo'
 import { Pillola } from '@/components/ui/Pillola'
 import { PillolaColorata } from '@/components/ui/PillolaColorata'
-import { Caricamento, Errore, Vuoto } from '@/components/ui/Stato'
+import { BarraChip, Chip } from '@/components/ui/Chip'
+import { Icona, type NomeIcona } from '@/components/ui/Icona'
+import { TestataPagina } from '@/components/ui/Scheda'
+import { Errore, Scheletro, Vuoto } from '@/components/ui/Stato'
 import { formattaEuro } from '@/lib/format'
 import { messaggioErrore } from '@/lib/errors'
 import { urlMappa, indirizzoCompleto } from '@/lib/maps'
@@ -106,42 +109,49 @@ export function LeadListPage() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-titolo font-semibold">Lead</h1>
-        <p className="text-etichetta text-testo-debole">
-          {visibili.length}
-          {visibili.length !== tutti.length && ` di ${tutti.length}`} lead
-        </p>
-      </div>
+      <TestataPagina
+        titolo="Lead"
+        descrizione={
+          <span className="cifre">
+            {visibili.length}
+            {visibili.length !== tutti.length && ` di ${tutti.length}`} lead
+          </span>
+        }
+      />
 
       <NuovoLead />
 
       {/* ------------------------------------------------------ filtri rapidi */}
-      <div className="-mx-4 mb-2 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <FiltroRapido attivo={!filtri.stato} onClick={() => imposta({ stato: '' })}>
+      <BarraChip className="mb-2" role="group" aria-label="Filtri rapidi">
+        <Chip attivo={!filtri.stato} onClick={() => imposta({ stato: '' })}>
           Tutti
-        </FiltroRapido>
+        </Chip>
         {STATI.map((s) => (
-          <FiltroRapido
+          <Chip
             key={s}
             attivo={filtri.stato === s}
             onClick={() => imposta({ stato: filtri.stato === s ? '' : s })}
           >
             {BADGE_STATO[s].etichetta}
-          </FiltroRapido>
+          </Chip>
         ))}
-        <FiltroRapido
+        <Chip
+          icona="autonomo"
           attivo={filtri.soloSelfGen}
           onClick={() => imposta({ soloSelfGen: !filtri.soloSelfGen })}
         >
-          ✋ Self gen
-        </FiltroRapido>
-      </div>
+          Self gen
+        </Chip>
+      </BarraChip>
 
       {/* ----------------------------------------------------- filtri completi */}
       <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        {/* `aria-label` e non solo `placeholder`: qui l'etichetta visibile
+            ruberebbe due righe al filtro, ma senza nulla il campo e' muto
+            per chi usa VoiceOver. */}
         <Input
           type="search"
+          aria-label="Cerca azienda o comune"
           placeholder="Cerca azienda o comune…"
           value={filtri.cerca}
           onChange={(e) => imposta({ cerca: e.target.value })}
@@ -149,6 +159,7 @@ export function LeadListPage() {
         <Input
           type="search"
           inputMode="numeric"
+          aria-label="Cerca partita IVA"
           placeholder="Cerca P.IVA…"
           value={filtri.piva}
           onChange={(e) => imposta({ piva: e.target.value })}
@@ -203,16 +214,37 @@ export function LeadListPage() {
           ))}
         </Select>
         {attivi && (
-          <Bottone variante="secondario" onClick={() => setParams(new URLSearchParams())}>
-            ✕ Azzera filtri
+          <Bottone
+            variante="secondario"
+            icona="chiudi"
+            onClick={() => setParams(new URLSearchParams())}
+          >
+            Azzera filtri
           </Bottone>
         )}
       </div>
 
-      {lista.isLoading && <Caricamento />}
+      {lista.isLoading && <Scheletro righe={6} className="mt-4" />}
       {lista.isError && <Errore errore={lista.error} />}
       {lista.data && visibili.length === 0 && (
-        <Vuoto testo={attivi ? 'Nessun lead con questi filtri.' : 'Ancora nessun lead.'} />
+        <Vuoto
+          icona={attivi ? 'filtra' : 'lead'}
+          testo={
+            attivi ? 'Nessun lead con questi filtri.' : 'Ancora nessun lead.'
+          }
+          azione={
+            attivi ? (
+              <Bottone
+                variante="secondario"
+                misura="sm"
+                icona="chiudi"
+                onClick={() => setParams(new URLSearchParams())}
+              >
+                Azzera filtri
+              </Bottone>
+            ) : undefined
+          }
+        />
       )}
 
       {visibili.length > 0 && (
@@ -226,25 +258,51 @@ export function LeadListPage() {
           </ul>
 
           {/* Desktop: tabella ordinabile, come il 3.0. */}
-          <div className="hidden overflow-x-auto rounded-card border border-bordo bg-superficie lg:block">
+          <div className="superficie-card hidden overflow-x-auto lg:block">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-bordo">
-                  {COLONNE.map((c) => (
-                    <th key={c.chiave} className="px-3 py-2 text-left">
+                {/* Intestazione appiccicata in alto: su 160 lead si perde di
+                    vista quale colonna si sta leggendo dopo poche righe. */}
+                <tr className="z-sticky sticky top-0 border-b border-bordo bg-superficie">
+                  {COLONNE.map((c) => {
+                    const ordinata = ordinamento.colonna === c.chiave
+                    return (
+                    <th
+                      key={c.chiave}
+                      className="px-3 py-2 text-left"
+                      /* `aria-sort` e' il modo standard di annunciare
+                         l'ordinamento corrente (WCAG): la freccia da sola
+                         non arriva agli screen reader. */
+                      aria-sort={
+                        ordinata
+                          ? ordinamento.discendente
+                            ? 'descending'
+                            : 'ascending'
+                          : 'none'
+                      }
+                    >
                       <button
                         onClick={() => alternaOrdine(c.chiave)}
-                        className={`text-etichetta font-semibold ${
-                          ordinamento.colonna === c.chiave
-                            ? 'text-info-soft-text'
-                            : 'text-testo-debole'
+                        className={`transizione-colore inline-flex items-center gap-1 text-etichetta font-semibold hover:text-testo ${
+                          ordinata ? 'text-info-soft-text' : 'text-testo-debole'
                         }`}
                       >
                         {c.etichetta}
-                        {ordinamento.colonna === c.chiave && (ordinamento.discendente ? ' ↓' : ' ↑')}
+                        <Icona
+                          nome={ordinata ? 'espandi' : 'ordina'}
+                          misura="sm"
+                          className={`transizione-opacita ${
+                            ordinata
+                              ? ordinamento.discendente
+                                ? ''
+                                : 'rotate-180'
+                              : 'opacity-40'
+                          }`}
+                        />
                       </button>
                     </th>
-                  ))}
+                    )
+                  })}
                   <th className="px-3 py-2 text-left text-etichetta font-semibold text-testo-debole">
                     Stato
                   </th>
@@ -269,29 +327,6 @@ export function LeadListPage() {
   )
 }
 
-function FiltroRapido({
-  attivo,
-  onClick,
-  children,
-}: {
-  attivo: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`min-h-11 flex-shrink-0 whitespace-nowrap rounded-pillola border px-3 text-etichetta font-medium ${
-        attivo
-          ? 'border-info-soft-border bg-info-soft text-info-soft-text'
-          : 'border-bordo bg-superficie text-testo-debole'
-      }`}
-    >
-      {children}
-    </button>
-  )
-}
-
 /** Badge di stato per ogni brand del lead: lo stato è per (lead, brand). */
 function StatiBrand({ lead }: { lead: LeadConBrand }) {
   return (
@@ -312,13 +347,17 @@ function Scorciatoie({ lead }: { lead: LeadConBrand }) {
   const google = urlGoogleAttivita(lead)
   const facebook = urlFacebookAttivita(lead)
   const link = [
-    mappa && { href: mappa, testo: '📍', titolo: 'Apri in mappa' },
-    google && { href: google, testo: '🔍', titolo: 'Cerca su Google' },
-    facebook && { href: facebook, testo: 'f', titolo: 'Cerca su Facebook' },
-  ].filter(Boolean) as { href: string; testo: string; titolo: string }[]
+    mappa && { href: mappa, icona: 'mappa', titolo: 'Apri in mappa' },
+    google && { href: google, icona: 'cerca', titolo: 'Cerca su Google' },
+    facebook && {
+      href: facebook,
+      icona: 'azienda',
+      titolo: 'Cerca su Facebook',
+    },
+  ].filter(Boolean) as { href: string; icona: NomeIcona; titolo: string }[]
 
   return (
-    <span className="flex flex-shrink-0 items-center gap-1">
+    <span className="flex shrink-0 items-center gap-1">
       {link.map((l) => (
         <a
           key={l.titolo}
@@ -329,9 +368,9 @@ function Scorciatoie({ lead }: { lead: LeadConBrand }) {
           aria-label={l.titolo}
           // stopPropagation: la riga è dentro un Link al dettaglio.
           onClick={(e) => e.stopPropagation()}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-card border border-bordo text-etichetta text-testo-debole"
+          className="premibile inline-flex h-11 w-11 items-center justify-center rounded-card border border-bordo text-testo-debole hover:border-bordo-forte hover:text-testo"
         >
-          {l.testo}
+          <Icona nome={l.icona} misura="sm" />
         </a>
       ))}
     </span>
@@ -343,15 +382,27 @@ function SchedaLead({ lead }: { lead: LeadConBrand }) {
   const verificato = lead.stati_verifica?.confermato
   return (
     <li
-      className={`rounded-card border bg-superficie ${
-        verificato ? 'border-success-soft-border' : 'border-bordo'
+      className={`transizione-colore rounded-card border bg-superficie ${
+        verificato
+          ? 'border-success-soft-border'
+          : 'border-bordo hover:border-bordo-forte'
       }`}
     >
-      <Link to={`/lead/${lead.id}`} className="block px-4 py-3">
+      <Link
+        to={`/lead/${lead.id}`}
+        className="premibile-ampio block px-4 py-3"
+      >
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="truncate text-campo font-medium">
-              {verificato && <span className="mr-1 text-success-soft-text">✓</span>}
+            <p className="flex items-center gap-1 truncate text-campo font-medium">
+              {verificato && (
+                <Icona
+                  nome="successo"
+                  misura="sm"
+                  titolo="Lead verificato"
+                  className="text-success-soft-text"
+                />
+              )}
               {lead.ragione_sociale}
             </p>
             {luogo && <p className="truncate text-etichetta text-testo-debole">{luogo}</p>}
@@ -369,7 +420,7 @@ function SchedaLead({ lead }: { lead: LeadConBrand }) {
             />
           )}
           {lead.fatturato_mensile != null && (
-            <span className="text-etichetta text-testo-debole">
+            <span className="cifre text-etichetta text-testo-debole">
               {formattaEuro(lead.fatturato_mensile)}/mese
             </span>
           )}
@@ -388,20 +439,33 @@ function SchedaLead({ lead }: { lead: LeadConBrand }) {
 function RigaTabella({ lead }: { lead: LeadConBrand }) {
   const verificato = lead.stati_verifica?.confermato
   return (
-    <tr className={`border-b border-bordo last:border-0 ${verificato ? 'bg-success-soft/40' : ''}`}>
+    <tr
+      className={`transizione-colore border-b border-bordo last:border-0 hover:bg-superficie-alt ${
+        verificato ? 'bg-success-soft/40' : ''
+      }`}
+    >
       <td className="px-3 py-2">
-        <Link to={`/lead/${lead.id}`} className="text-campo font-medium text-info-soft-text">
+        <Link
+          to={`/lead/${lead.id}`}
+          className="transizione-colore text-campo font-medium text-info-soft-text hover:underline"
+        >
           {lead.ragione_sociale}
         </Link>
       </td>
-      <td className="px-3 py-2 text-etichetta text-testo-debole">{lead.comune ?? '—'}</td>
+      <td className="px-3 py-2 text-etichetta text-testo-debole">
+        {lead.comune ?? '—'}
+      </td>
       <td className="px-3 py-2">
         {lead.target ? <Pillola tinta="avviso">{lead.target}</Pillola> : '—'}
       </td>
-      <td className="px-3 py-2 text-etichetta text-testo-debole">
-        {lead.fatturato_mensile != null ? formattaEuro(lead.fatturato_mensile) : '—'}
+      <td className="cifre px-3 py-2 text-etichetta text-testo-debole">
+        {lead.fatturato_mensile != null
+          ? formattaEuro(lead.fatturato_mensile)
+          : '—'}
       </td>
-      <td className="px-3 py-2 font-mono text-etichetta text-testo-debole">{lead.piva ?? '—'}</td>
+      <td className="cifre px-3 py-2 text-etichetta text-testo-debole">
+        {lead.piva ?? '—'}
+      </td>
       <td className="px-3 py-2">
         <span className="flex flex-wrap items-center gap-1">
           <StatiBrand lead={lead} />
@@ -442,25 +506,29 @@ function NuovoLead() {
 
   if (!aperto) {
     return (
-      <Bottone piena className="mb-3" onClick={() => setAperto(true)}>
-        ＋ Nuovo lead
+      <Bottone piena icona="aggiungi" className="mb-3" onClick={() => setAperto(true)}>
+        Nuovo lead
       </Bottone>
     )
   }
 
   return (
-    <form onSubmit={onSubmit} className="mb-3 flex flex-col gap-2">
-      <Input
-        autoFocus
-        placeholder="Ragione sociale"
-        value={nome}
-        onChange={(e) => setNome(e.target.value)}
-      />
-      {crea.isError && (
-        <p className="text-etichetta text-danger-soft-text">{messaggioErrore(crea.error)}</p>
-      )}
+    <form onSubmit={onSubmit} className="animate-salita mb-3 flex flex-col gap-2">
+      <Campo etichetta="Ragione sociale" obbligatorio errore={crea.isError ? messaggioErrore(crea.error) : null}>
+        <Input
+          autoFocus
+          autoComplete="organization"
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+        />
+      </Campo>
       <div className="flex gap-2">
-        <Bottone type="submit" disabled={crea.isPending || !nome.trim()}>
+        <Bottone
+          type="submit"
+          icona="conferma"
+          disabled={!nome.trim()}
+          caricamento={crea.isPending}
+        >
           {crea.isPending ? 'Creazione…' : 'Crea e apri'}
         </Bottone>
         <Bottone variante="secondario" onClick={() => setAperto(false)}>

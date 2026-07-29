@@ -1,83 +1,362 @@
 @import 'tailwindcss';
 
+/* ==================================================================
+   AgentPro — sistema di design (Specifica §2)
+
+   REGOLA UNICA: nei componenti si usa SEMPRE un token, mai un valore
+   grezzo. Niente `bg-slate-100`, niente `#fff`, niente `text-[13px]`,
+   niente `duration-200`. Se serve un valore nuovo, si aggiunge qui.
+
+   Il file e' diviso in tre strati:
+
+     1. PALETTE RUNTIME  (`--t-*`)  valori concreti, uno per tema.
+     2. TOKEN SEMANTICI  (`@theme`) danno i nomi alle utility Tailwind.
+     3. BASE + UTILITY    regole globali e utility composte.
+
+   Lo strato 1 e' l'unico posto dove compare un colore vero. Lo strato 2
+   non conosce i colori, solo i ruoli. Per questo il tema scuro costa una
+   sola sezione di override e non tocca un singolo componente.
+   ================================================================== */
+
 /* ------------------------------------------------------------------
-   AgentPro — design tokens (Specifica §2)
-   I colori sono SEMANTICI: si usa sempre il token, mai il colore grezzo.
-   Cambiare la palette qui cambia tutta l'app in modo coerente.
+   1. PALETTE RUNTIME — tema chiaro (default)
    ------------------------------------------------------------------ */
-@theme {
-  /* Rosso chiaro — concorrenti/POS attuale, conflitti, tasti elimina */
-  --color-danger-soft: oklch(0.94 0.03 25);
-  --color-danger-soft-border: oklch(0.85 0.07 25);
-  --color-danger-soft-text: oklch(0.45 0.15 25);
+:root {
+  /* superfici e testo */
+  --t-sfondo: oklch(0.976 0.002 255);
+  --t-superficie: oklch(1 0 0);
+  --t-superficie-alt: oklch(0.967 0.003 255);
+  --t-bordo: oklch(0.905 0.005 255);
+  /* `bordo-forte` e' il bordo dei CONTROLLI (input, select, textarea): per
+     WCAG 1.4.11 deve stare a 3:1 dallo sfondo, altrimenti il campo non si
+     distingue. `bordo` e' solo un divisore decorativo e non ha vincoli. */
+  --t-bordo-forte: oklch(0.66 0.014 255);
+  --t-testo: oklch(0.22 0.012 255);
+  --t-testo-debole: oklch(0.5 0.012 255);
+  --t-testo-tenue: oklch(0.62 0.01 255);
 
-  /* Rosso pieno — ECCEZIONE §2: solo "Memo vocale" e "Foto/doc.".
-     Convenzione universale di registrazione, non segue la logica semantica. */
-  --color-danger-fill: oklch(0.58 0.22 25);
-  --color-danger-fill-text: oklch(0.99 0 0);
+  /* azione primaria */
+  --t-primario: oklch(0.52 0.17 255);
+  --t-primario-forte: oklch(0.45 0.17 255);
+  --t-primario-testo: oklch(0.99 0 0);
 
-  /* Verde chiaro — stati positivi, brand Hera Comm, badge Principale */
-  --color-success-soft: oklch(0.94 0.04 150);
-  --color-success-soft-border: oklch(0.85 0.09 150);
-  --color-success-soft-text: oklch(0.42 0.13 150);
+  /* rosso chiaro — concorrenti/POS attuale, conflitti, elimina */
+  --t-danger-soft: oklch(0.945 0.035 25);
+  --t-danger-soft-border: oklch(0.86 0.08 25);
+  --t-danger-soft-text: oklch(0.45 0.16 25);
 
-  /* Blu chiaro — brand NEXI, link cliccabili, sezione "Oggi" */
-  --color-info-soft: oklch(0.94 0.03 250);
-  --color-info-soft-border: oklch(0.84 0.08 250);
-  --color-info-soft-text: oklch(0.45 0.16 250);
+  /* rosso pieno — ECCEZIONE §2: solo "Memo vocale" e "Foto/doc.".
+     Convenzione universale di registrazione, non segue la semantica. */
+  --t-danger-fill: oklch(0.575 0.22 25);
+  --t-danger-fill-text: oklch(0.99 0 0);
 
-  /* Ambra chiaro — target, banner modifiche non salvate, avvisi soft */
-  --color-warning-soft: oklch(0.95 0.05 85);
-  --color-warning-soft-border: oklch(0.86 0.11 85);
-  --color-warning-soft-text: oklch(0.45 0.12 75);
+  /* verde chiaro — esiti positivi, brand Hera Comm, badge Principale */
+  --t-success-soft: oklch(0.945 0.045 150);
+  --t-success-soft-border: oklch(0.86 0.09 150);
+  --t-success-soft-text: oklch(0.41 0.13 150);
 
-  /* Grigio neutro — etichette campi (pillole), card, badge fonte lead */
-  --color-neutral-soft: oklch(0.96 0.002 250);
-  --color-neutral-soft-border: oklch(0.89 0.004 250);
-  --color-neutral-soft-text: oklch(0.44 0.01 250);
+  /* blu chiaro — brand NEXI, link, sezione "Oggi" */
+  --t-info-soft: oklch(0.945 0.035 250);
+  --t-info-soft-border: oklch(0.855 0.08 250);
+  --t-info-soft-text: oklch(0.45 0.16 250);
 
-  --color-superficie: oklch(1 0 0);
-  --color-sfondo: oklch(0.975 0.002 250);
-  --color-bordo: oklch(0.9 0.004 250);
-  --color-testo: oklch(0.22 0.01 250);
-  --color-testo-debole: oklch(0.52 0.01 250);
+  /* ambra chiaro — target, modifiche non salvate, avvisi soft */
+  --t-warning-soft: oklch(0.955 0.055 85);
+  --t-warning-soft-border: oklch(0.87 0.11 85);
+  --t-warning-soft-text: oklch(0.43 0.12 75);
 
-  /* Scala tipografica §2 — NON ridurre per guadagnare spazio (§15):
-     la densità viene dal vedere più elementi, non da caratteri più piccoli. */
-  --text-etichetta: 15px;
-  --text-etichetta--line-height: 1.3;
-  --text-campo: 17px;
-  --text-campo--line-height: 1.4;
-  --text-titolo: 22px;
-  --text-titolo--line-height: 1.25;
+  /* grigio neutro — etichette, badge fonte lead */
+  --t-neutral-soft: oklch(0.962 0.003 255);
+  --t-neutral-soft-border: oklch(0.895 0.005 255);
+  --t-neutral-soft-text: oklch(0.44 0.012 255);
 
-  --radius-pillola: 9999px;
-  --radius-card: 12px;
+  /* anello di focus da tastiera */
+  --t-focus: oklch(0.55 0.19 255);
+
+  /* velo dietro fogli e dialoghi */
+  --t-velo: oklch(0.22 0.012 255 / 0.45);
 }
 
+/* ------------------------------------------------------------------
+   1b. PALETTE RUNTIME — tema scuro
+
+   Non e' un'inversione: i toni sono desaturati e ri-tarati, come
+   prescrivono HIG e Material. Le tinte semantiche diventano fondi scuri
+   con testo chiaro, mantenendo lo stesso ruolo (rosso = attenzione,
+   verde = positivo) e lo stesso contrasto minimo del tema chiaro.
+
+   Si attiva dalle impostazioni di sistema, oppure forzando
+   `data-tema="scuro"` / `data-tema="chiaro"` su <html>.
+   ------------------------------------------------------------------ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema='chiaro']) {
+    --t-sfondo: oklch(0.168 0.008 255);
+    --t-superficie: oklch(0.215 0.011 255);
+    --t-superficie-alt: oklch(0.26 0.013 255);
+    --t-bordo: oklch(0.315 0.014 255);
+    --t-bordo-forte: oklch(0.52 0.016 255);
+    --t-testo: oklch(0.965 0.003 255);
+    --t-testo-debole: oklch(0.745 0.011 255);
+    --t-testo-tenue: oklch(0.63 0.012 255);
+
+    --t-primario: oklch(0.62 0.16 255);
+    --t-primario-forte: oklch(0.69 0.15 255);
+    --t-primario-testo: oklch(0.16 0.02 255);
+
+    --t-danger-soft: oklch(0.3 0.07 25);
+    --t-danger-soft-border: oklch(0.42 0.1 25);
+    --t-danger-soft-text: oklch(0.85 0.1 25);
+
+    --t-danger-fill: oklch(0.56 0.21 25);
+    --t-danger-fill-text: oklch(0.99 0 0);
+
+    --t-success-soft: oklch(0.29 0.06 150);
+    --t-success-soft-border: oklch(0.4 0.09 150);
+    --t-success-soft-text: oklch(0.86 0.11 150);
+
+    --t-info-soft: oklch(0.3 0.07 250);
+    --t-info-soft-border: oklch(0.41 0.1 250);
+    --t-info-soft-text: oklch(0.85 0.09 250);
+
+    --t-warning-soft: oklch(0.3 0.06 85);
+    --t-warning-soft-border: oklch(0.42 0.09 85);
+    --t-warning-soft-text: oklch(0.87 0.11 85);
+
+    --t-neutral-soft: oklch(0.27 0.008 255);
+    --t-neutral-soft-border: oklch(0.36 0.01 255);
+    --t-neutral-soft-text: oklch(0.79 0.01 255);
+
+    --t-focus: oklch(0.72 0.14 255);
+    --t-velo: oklch(0.1 0.01 255 / 0.6);
+  }
+}
+
+/* Forzatura esplicita, per un eventuale selettore di tema in Config. */
+:root[data-tema='scuro'] {
+  --t-sfondo: oklch(0.168 0.008 255);
+  --t-superficie: oklch(0.215 0.011 255);
+  --t-superficie-alt: oklch(0.26 0.013 255);
+  --t-bordo: oklch(0.315 0.014 255);
+  --t-bordo-forte: oklch(0.52 0.016 255);
+  --t-testo: oklch(0.965 0.003 255);
+  --t-testo-debole: oklch(0.745 0.011 255);
+  --t-testo-tenue: oklch(0.63 0.012 255);
+  --t-primario: oklch(0.62 0.16 255);
+  --t-primario-forte: oklch(0.69 0.15 255);
+  --t-primario-testo: oklch(0.16 0.02 255);
+  --t-danger-soft: oklch(0.3 0.07 25);
+  --t-danger-soft-border: oklch(0.42 0.1 25);
+  --t-danger-soft-text: oklch(0.85 0.1 25);
+  --t-danger-fill: oklch(0.56 0.21 25);
+  --t-danger-fill-text: oklch(0.99 0 0);
+  --t-success-soft: oklch(0.29 0.06 150);
+  --t-success-soft-border: oklch(0.4 0.09 150);
+  --t-success-soft-text: oklch(0.86 0.11 150);
+  --t-info-soft: oklch(0.3 0.07 250);
+  --t-info-soft-border: oklch(0.41 0.1 250);
+  --t-info-soft-text: oklch(0.85 0.09 250);
+  --t-warning-soft: oklch(0.3 0.06 85);
+  --t-warning-soft-border: oklch(0.42 0.09 85);
+  --t-warning-soft-text: oklch(0.87 0.11 85);
+  --t-neutral-soft: oklch(0.27 0.008 255);
+  --t-neutral-soft-border: oklch(0.36 0.01 255);
+  --t-neutral-soft-text: oklch(0.79 0.01 255);
+  --t-focus: oklch(0.72 0.14 255);
+  --t-velo: oklch(0.1 0.01 255 / 0.6);
+}
+
+/* ------------------------------------------------------------------
+   1c. VALORI NON-COLORE che non hanno un namespace Tailwind proprio.
+   Durate e z-index vivono qui e si usano tramite le utility in §3.
+   ------------------------------------------------------------------ */
+:root {
+  /* Durate §"quanto veloce" — sotto i 300ms per tutto cio' che e' UI.
+     Piu' spesso l'utente vede un'animazione, piu' deve essere corta. */
+  --durata-pressione: 140ms; /* feedback al tocco */
+  --durata-veloce: 160ms; /* colore, opacita', hover */
+  --durata-media: 220ms; /* tendine, pannelli, accordion */
+  --durata-lenta: 300ms; /* fogli, dialoghi */
+
+  /* Scala z-index: dichiarata una volta, mai numeri sparsi nei file. */
+  --z-contenuto: 0;
+  --z-sticky: 20;
+  --z-navigazione: 40;
+  --z-velo: 50;
+  --z-dialogo: 60;
+  --z-avviso: 70;
+
+  /* Altezza minima dei bersagli tattili (§2: 44px, si usa in piedi). */
+  --tocco-min: 44px;
+}
+
+/* ------------------------------------------------------------------
+   2. TOKEN SEMANTICI — i nomi che i componenti possono usare.
+
+   `inline` fa si' che le utility puntino direttamente alla variabile
+   runtime: cosi' un override del tema funziona a qualunque livello del
+   DOM, non solo su :root.
+   ------------------------------------------------------------------ */
+@theme inline {
+  --color-sfondo: var(--t-sfondo);
+  --color-superficie: var(--t-superficie);
+  --color-superficie-alt: var(--t-superficie-alt);
+  --color-bordo: var(--t-bordo);
+  --color-bordo-forte: var(--t-bordo-forte);
+  --color-testo: var(--t-testo);
+  --color-testo-debole: var(--t-testo-debole);
+  --color-testo-tenue: var(--t-testo-tenue);
+
+  --color-primario: var(--t-primario);
+  --color-primario-forte: var(--t-primario-forte);
+  --color-primario-testo: var(--t-primario-testo);
+
+  --color-danger-soft: var(--t-danger-soft);
+  --color-danger-soft-border: var(--t-danger-soft-border);
+  --color-danger-soft-text: var(--t-danger-soft-text);
+  --color-danger-fill: var(--t-danger-fill);
+  --color-danger-fill-text: var(--t-danger-fill-text);
+
+  --color-success-soft: var(--t-success-soft);
+  --color-success-soft-border: var(--t-success-soft-border);
+  --color-success-soft-text: var(--t-success-soft-text);
+
+  --color-info-soft: var(--t-info-soft);
+  --color-info-soft-border: var(--t-info-soft-border);
+  --color-info-soft-text: var(--t-info-soft-text);
+
+  --color-warning-soft: var(--t-warning-soft);
+  --color-warning-soft-border: var(--t-warning-soft-border);
+  --color-warning-soft-text: var(--t-warning-soft-text);
+
+  --color-neutral-soft: var(--t-neutral-soft);
+  --color-neutral-soft-border: var(--t-neutral-soft-border);
+  --color-neutral-soft-text: var(--t-neutral-soft-text);
+
+  --color-focus: var(--t-focus);
+  --color-velo: var(--t-velo);
+}
+
+@theme {
+  /* Scala tipografica §2 — NON ridurla per guadagnare spazio (§15): la
+     densita' viene dal vedere piu' elementi, non da caratteri piu' piccoli.
+     `micro` esiste solo per etichette di navigazione e badge, mai per
+     contenuto leggibile. */
+  --text-micro: 13px;
+  --text-micro--line-height: 1.25;
+  --text-etichetta: 15px;
+  --text-etichetta--line-height: 1.35;
+  --text-campo: 17px;
+  --text-campo--line-height: 1.45;
+  --text-titolo: 22px;
+  --text-titolo--line-height: 1.25;
+  --text-titolo--letter-spacing: -0.01em;
+  --text-cifra: 30px;
+  --text-cifra--line-height: 1.1;
+  --text-cifra--letter-spacing: -0.02em;
+
+  --radius-piccolo: 8px;
+  --radius-card: 12px;
+  --radius-grande: 16px;
+  --radius-pillola: 9999px;
+
+  /* Elevazione appena percettibile: lo stile e' piatto, l'ombra serve a
+     staccare cio' che galleggia davvero (barre fisse, fogli), non le card. */
+  --shadow-basso: 0 1px 2px oklch(0.22 0.012 255 / 0.06);
+  --shadow-medio: 0 2px 8px oklch(0.22 0.012 255 / 0.08);
+  --shadow-alto: 0 8px 28px oklch(0.22 0.012 255 / 0.14);
+
+  /* Curve: quelle native di CSS sono troppo deboli.
+     `uscita` per cio' che entra/esce, `morbida` per cio' che si sposta,
+     mai `ease-in` sull'interfaccia (parte lento = sembra rotta). */
+  --ease-uscita: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-morbida: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-cassetto: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --animate-comparsa: comparsa 220ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-salita: salita 260ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-scheletro: scheletro 1.4s ease-in-out infinite;
+  --animate-rotazione: rotazione 620ms linear infinite;
+}
+
+@keyframes comparsa {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Mai da scale(0): nulla, nel mondo reale, appare dal nulla. */
+@keyframes salita {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+  }
+}
+
+@keyframes scheletro {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@keyframes rotazione {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ------------------------------------------------------------------
+   3. BASE
+   ------------------------------------------------------------------ */
 html {
-  /* iOS zooma il campo al focus se il testo è < 16px: --text-campo è 17px. */
+  /* iOS zooma il campo al focus se il testo e' < 16px: --text-campo e' 17px. */
   -webkit-text-size-adjust: 100%;
+  /* Dice al browser di disegnare form e scrollbar native col tema giusto. */
+  color-scheme: light dark;
+}
+
+:root[data-tema='chiaro'] {
+  color-scheme: light;
+}
+:root[data-tema='scuro'] {
+  color-scheme: dark;
 }
 
 body {
   margin: 0;
   background: var(--color-sfondo);
   color: var(--color-testo);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: var(--text-campo);
-  line-height: 1.4;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
-  /* Safe area iPhone con notch, quando installata come PWA standalone */
-  padding: env(safe-area-inset-top) env(safe-area-inset-right)
-    env(safe-area-inset-bottom) env(safe-area-inset-left);
+  /* Safe area laterale (notch in orizzontale) e superiore. Il fondo NON si
+     imbottisce qui: lo fa la barra di navigazione fissa, che e' l'unica
+     cosa che tocca quel bordo. Farlo in due punti raddoppiava lo spazio. */
+  padding-top: env(safe-area-inset-top);
+  padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
 }
 
-/* Target di tocco minimo 44px: l'app si usa in piedi davanti al cliente. */
+/* Bersaglio minimo 44px e niente ritardo di 300ms al tap. */
+button,
+[role='button'],
+a,
+label,
+select,
+summary {
+  touch-action: manipulation;
+}
+
 button,
 [role='button'] {
-  min-height: 44px;
+  min-height: var(--tocco-min);
   font-family: inherit;
+  cursor: pointer;
+}
+
+button:disabled,
+[role='button'][aria-disabled='true'] {
+  cursor: not-allowed;
 }
 
 input,
@@ -85,4 +364,140 @@ select,
 textarea {
   font-family: inherit;
   font-size: var(--text-campo);
+  color: inherit;
+}
+
+/* Un solo anello di focus per tutta l'app, visibile su entrambi i temi.
+   `:focus-visible` e non `:focus`: col dito non deve comparire nulla. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  /* Niente `border-radius` qui: cambierebbe la FORMA dell'elemento al focus.
+     L'outline segue gia' da solo il raggio dell'elemento. */
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Il puntatore non esiste sul telefono: senza questo, un `hover:` resta
+   "appiccicato" dopo il tap e la voce sembra selezionata quando non lo e'.
+   Ridefinire la variante una volta sola vale per tutti gli `hover:` dell'app;
+   il feedback al tocco lo da' invece `premibile` con `:active`. */
+@custom-variant hover {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      @slot;
+    }
+  }
+}
+
+/* Meno movimento significa movimento ridotto, non zero: opacita' e colore
+   restano perche' aiutano a capire cosa e' cambiato. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ------------------------------------------------------------------
+   4. UTILITY COMPOSTE — incapsulano una decisione, non un valore.
+   ------------------------------------------------------------------ */
+
+/* La superficie standard: usarla al posto di ripetere bordo+raggio+sfondo. */
+@utility superficie-card {
+  background-color: var(--color-superficie);
+  border: 1px solid var(--color-bordo);
+  border-radius: var(--radius-card);
+}
+
+/* Feedback al tocco: l'elemento "sente" la pressione. Sottile (0.97) e
+   veloce, perche' si ripete decine di volte al giorno. */
+@utility premibile {
+  transition:
+    transform var(--durata-pressione) var(--ease-uscita),
+    background-color var(--durata-veloce) ease,
+    border-color var(--durata-veloce) ease,
+    color var(--durata-veloce) ease,
+    opacity var(--durata-veloce) ease;
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+}
+
+/* Come sopra ma per superfici grandi (card, righe di lista): scala meno,
+   altrimenti sembra che la pagina si pieghi. */
+@utility premibile-ampio {
+  transition:
+    transform var(--durata-pressione) var(--ease-uscita),
+    background-color var(--durata-veloce) ease,
+    border-color var(--durata-veloce) ease;
+  &:active {
+    transform: scale(0.995);
+  }
+}
+
+/* Transizione di colore standard, senza `all`: `all` anima anche cio' che
+   non deve (layout), ed e' la causa piu' comune di scatti. */
+@utility transizione-colore {
+  transition:
+    background-color var(--durata-veloce) ease,
+    border-color var(--durata-veloce) ease,
+    color var(--durata-veloce) ease;
+}
+
+@utility transizione-opacita {
+  transition: opacity var(--durata-veloce) ease;
+}
+
+/* Per cio' che ruota o scorre restando sullo schermo (frecce di accordion,
+   pannelli): `morbida` accelera e decelera, che e' come si muovono le cose
+   che erano gia' li'. */
+@utility transizione-trasformazione {
+  transition: transform var(--durata-media) var(--ease-morbida);
+}
+
+/* Cifre a larghezza fissa: contatori e importi non devono ballare quando
+   cambiano di una unita'. */
+@utility cifre {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Barra scorrevole orizzontale senza scrollbar visibile (schede, chip). */
+@utility scorrevole-x {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility z-sticky {
+  z-index: var(--z-sticky);
+}
+@utility z-navigazione {
+  z-index: var(--z-navigazione);
+}
+@utility z-velo {
+  z-index: var(--z-velo);
+}
+@utility z-dialogo {
+  z-index: var(--z-dialogo);
+}
+@utility z-avviso {
+  z-index: var(--z-avviso);
+}
+
+/* Imbottitura per la safe area inferiore (barra fissa, fogli). */
+@utility pb-sicura {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Spazio che il contenuto deve lasciare sotto di se' per non finire dietro
+   la barra di navigazione del telefono. */
+@utility spazio-barra {
+  padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
 }

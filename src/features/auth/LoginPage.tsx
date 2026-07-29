@@ -3,6 +3,9 @@ import { Navigate } from 'react-router-dom'
 import { accedi } from './api'
 import { useSession } from './useSession'
 import { messaggioErrore } from '@/lib/errors'
+import { Bottone, BottoneIcona } from '@/components/ui/Bottone'
+import { Campo, Input } from '@/components/ui/Campo'
+import { Avviso } from '@/components/ui/Avviso'
 
 export function LoginPage() {
   const { session, caricamento } = useSession()
@@ -10,6 +13,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [errore, setErrore] = useState<string | null>(null)
   const [inCorso, setInCorso] = useState(false)
+  const [mostraPassword, setMostraPassword] = useState(false)
 
   if (caricamento) return null
   if (session) return <Navigate to="/" replace />
@@ -31,52 +35,55 @@ export function LoginPage() {
     <div className="flex min-h-svh items-center justify-center p-6">
       <form
         onSubmit={onSubmit}
-        className="w-full max-w-sm rounded-card border border-bordo bg-superficie p-6"
+        className="superficie-card animate-salita flex w-full max-w-sm flex-col gap-4 p-6"
       >
-        <h1 className="mb-6 text-center text-titolo font-semibold">AgentPro</h1>
+        <div className="text-center">
+          <h1 className="text-titolo font-semibold">AgentPro</h1>
+          <p className="text-etichetta text-testo-debole">NEXI · Hera Comm</p>
+        </div>
 
-        <label className="mb-1 block text-etichetta text-testo-debole" htmlFor="email">
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          autoComplete="username"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="mb-4 w-full rounded-card border border-bordo px-3 py-2.5 text-campo"
-        />
+        <Campo etichetta="Email" obbligatorio>
+          <Input
+            type="email"
+            inputMode="email"
+            autoComplete="username"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </Campo>
 
-        <label className="mb-1 block text-etichetta text-testo-debole" htmlFor="password">
-          Password
-        </label>
-        <input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="mb-4 w-full rounded-card border border-bordo px-3 py-2.5 text-campo"
-        />
+        <Campo etichetta="Password" obbligatorio>
+          {/* Mostra/nascondi: su tastiera del telefono si sbaglia a digitare
+              piu' spesso, e senza questo l'unico rimedio e' riscrivere tutto. */}
+          <div className="relative">
+            <Input
+              type={mostraPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              className="pr-12"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <BottoneIcona
+              nome="mostra"
+              etichetta={
+                mostraPassword ? 'Nascondi la password' : 'Mostra la password'
+              }
+              className="absolute inset-y-0 right-0"
+              aria-pressed={mostraPassword}
+              onClick={() => setMostraPassword((v) => !v)}
+            />
+          </div>
+        </Campo>
 
         {errore && (
-          <p
-            role="alert"
-            className="mb-4 rounded-card border border-danger-soft-border bg-danger-soft px-3 py-2 text-etichetta text-danger-soft-text"
-          >
+          <Avviso tinta="pericolo" assertivo>
             {errore}
-          </p>
+          </Avviso>
         )}
 
-        <button
-          type="submit"
-          disabled={inCorso}
-          className="w-full rounded-card bg-info-soft-text px-4 py-3 text-campo font-medium text-white disabled:opacity-50"
-        >
+        <Bottone type="submit" piena caricamento={inCorso}>
           {inCorso ? 'Accesso in corso…' : 'Accedi'}
-        </button>
+        </Bottone>
       </form>
     </div>
   )

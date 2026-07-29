@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Bottone, BottoneIcona } from '@/components/ui/Bottone'
 import { Scheda } from '@/components/ui/Scheda'
 import { Pillola } from '@/components/ui/Pillola'
 import { Caricamento, Errore, Vuoto } from '@/components/ui/Stato'
@@ -25,9 +26,14 @@ export function PannelloLavorazioni({
     <Scheda
       titolo="Lavorazioni"
       azione={
-        <button className="text-etichetta text-info-soft-text" onClick={() => setRegistra((v) => !v)}>
-          {registra ? 'Chiudi' : '＋ Registra'}
-        </button>
+        <Bottone
+            variante="fantasma"
+            misura="sm"
+            icona={registra ? 'chiudi' : 'aggiungi'}
+            onClick={() => setRegistra((v) => !v)}
+          >
+            {registra ? 'Chiudi' : 'Registra'}
+          </Bottone>
       }
       className="mb-4"
     >
@@ -90,14 +96,13 @@ function RigaLavorazione({
           {dettagli && <p className="mt-0.5 text-etichetta text-testo-debole">{dettagli}</p>}
           {lavorazione.note && <p className="mt-0.5 text-etichetta">{lavorazione.note}</p>}
         </div>
-        <button
-          aria-label="Elimina lavorazione"
-          className="px-1 text-danger-soft-text"
+        <BottoneIcona
+          nome="elimina"
+          etichetta="Elimina lavorazione"
+          className="text-danger-soft-text"
           onClick={() => elimina.mutate(lavorazione.id)}
           disabled={elimina.isPending}
-        >
-          ✕
-        </button>
+        />
       </div>
     </li>
   )

@@ -1,4 +1,6 @@
 import { useState, type ChangeEvent } from 'react'
+import { Icona } from '@/components/ui/Icona'
+import { Avviso } from '@/components/ui/Avviso'
 import { useQueryClient } from '@tanstack/react-query'
 import { Scheda } from '@/components/ui/Scheda'
 import { Bottone } from '@/components/ui/Bottone'
@@ -94,25 +96,40 @@ export function BackupCard() {
 
   return (
     <Scheda titolo="Backup e ripristino" className="mb-4">
-      <p className="mb-3 rounded-card border border-info-soft-border bg-info-soft px-3 py-2 text-etichetta text-info-soft-text">
-        Il backup contiene tutte le tabelle (lead, lavorazioni, appuntamenti, vocabolari,
-        configurazione). <strong>Non</strong> contiene i file di foto, memo vocali e PDF: quelli
-        restano nello Storage, e nel JSON ne trovi solo i riferimenti.
-      </p>
+      <Avviso className="mb-3">
+        Il backup contiene tutte le tabelle (lead, lavorazioni, appuntamenti,
+        vocabolari, configurazione). <strong>Non</strong> contiene i file di
+        foto, memo vocali e PDF: quelli restano nello Storage, e nel JSON ne
+        trovi solo i riferimenti.
+      </Avviso>
 
-      <Bottone onClick={scarica} disabled={inCorso !== null}>
-        {inCorso === 'export' ? 'Preparazione…' : '⬇ Scarica backup (.json)'}
+      <Bottone
+        icona="scarica"
+        onClick={scarica}
+        caricamento={inCorso === 'export'}
+        disabled={inCorso !== null}
+      >
+        {inCorso === 'export' ? 'Preparazione…' : 'Scarica backup (.json)'}
       </Bottone>
 
       <div className="mt-4 border-t border-bordo pt-4">
         <p className="mb-2 text-campo font-medium">Ripristina da file</p>
-        <p className="mb-2 rounded-card border border-warning-soft-border bg-warning-soft px-3 py-2 text-etichetta text-warning-soft-text">
-          Il ripristino sovrascrive le righe che hanno lo stesso identificativo. Non cancella
-          quello che nel file non c'è.
-        </p>
-        <label className="inline-flex min-h-11 cursor-pointer items-center rounded-card border border-bordo bg-superficie px-4 text-campo font-medium">
+        <Avviso tinta="avviso" className="mb-2">
+          Il ripristino sovrascrive le righe che hanno lo stesso
+          identificativo. Non cancella quello che nel file non c'è.
+        </Avviso>
+        {/* Un <label> che avvolge un input file nascosto: e' il modo standard
+            di avere un bersaglio da 44px al posto del controllo di sistema,
+            che non si puo' ridimensionare. */}
+        <label className="superficie-card premibile inline-flex min-h-11 cursor-pointer items-center gap-2 px-4 text-campo font-medium">
+          <Icona nome="importa" misura="sm" />
           Scegli file .json
-          <input type="file" accept="application/json,.json" hidden onChange={scegliFile} />
+          <input
+            type="file"
+            accept="application/json,.json"
+            hidden
+            onChange={scegliFile}
+          />
         </label>
 
         {riepilogo && <p className="mt-2 text-etichetta text-testo-debole">{riepilogo}</p>}

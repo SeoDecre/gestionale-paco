@@ -1,5 +1,6 @@
 import { Scheda } from '@/components/ui/Scheda'
-import { Caricamento, Errore } from '@/components/ui/Stato'
+import { Chip } from '@/components/ui/Chip'
+import { Caricamento, Errore, Vuoto } from '@/components/ui/Stato'
 import { useEsigenzePos } from '@/features/vocabolari/queries'
 import { useEsigenzeLead, useAggiungiEsigenza, useRimuoviEsigenza } from '../queries'
 
@@ -20,35 +21,35 @@ export function PannelloEsigenze({ leadId }: { leadId: string }) {
   const scelteIds = new Set((scelte.data ?? []).map((e) => e.esigenza_id))
 
   return (
-    <Scheda titolo="Esigenze POS" className="mb-4">
+    <Scheda
+      titolo="Esigenze POS"
+      icona="pos"
+      descrizione="Del cliente, non della singola sede (§4)."
+      className="mb-4"
+    >
       {(disponibili.isLoading || scelte.isLoading) && <Caricamento />}
       {disponibili.isError && <Errore errore={disponibili.error} />}
       {scelte.isError && <Errore errore={scelte.error} />}
 
       {disponibili.data && disponibili.data.length === 0 && (
-        <p className="text-etichetta text-testo-debole">
-          Nessuna esigenza in elenco — si aggiungono in Configurazione → Vocabolari.
-        </p>
+        <Vuoto
+          icona="pos"
+          testo="Nessuna esigenza in elenco — si aggiungono in Configurazione → Vocabolari."
+        />
       )}
 
       <div className="flex flex-wrap gap-1.5">
         {(disponibili.data ?? []).map((e) => {
           const on = scelteIds.has(e.id)
           return (
-            <button
+            <Chip
               key={e.id}
-              type="button"
-              aria-pressed={on}
+              attivo={on}
               disabled={aggiungi.isPending || rimuovi.isPending}
               onClick={() => (on ? rimuovi.mutate(e.id) : aggiungi.mutate(e.id))}
-              className={`min-h-11 rounded-pillola border px-3 text-etichetta font-medium ${
-                on
-                  ? 'border-info-soft-border bg-info-soft text-info-soft-text'
-                  : 'border-bordo bg-superficie text-testo-debole'
-              }`}
             >
               {e.nome}
-            </button>
+            </Chip>
           )
         })}
       </div>

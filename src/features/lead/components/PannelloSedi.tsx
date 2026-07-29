@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Scheda } from '@/components/ui/Scheda'
-import { Bottone } from '@/components/ui/Bottone'
+import { Bottone, BottoneIcona } from '@/components/ui/Bottone'
 import { Input, Select } from '@/components/ui/Campo'
 import { Pillola } from '@/components/ui/Pillola'
 import { Caricamento, Errore, Vuoto } from '@/components/ui/Stato'
@@ -33,9 +33,14 @@ export function PannelloSedi({ leadId }: { leadId: string }) {
       titolo={`Sedi (${numero}/${MAX_SEDI})`}
       azione={
         !pieno && (
-          <button className="text-etichetta text-info-soft-text" onClick={() => setAggiungi((v) => !v)}>
-            {aggiungi ? 'Chiudi' : '＋ Aggiungi'}
-          </button>
+          <Bottone
+            variante="fantasma"
+            misura="sm"
+            icona={aggiungi ? 'chiudi' : 'aggiungi'}
+            onClick={() => setAggiungi((v) => !v)}
+          >
+            {aggiungi ? 'Chiudi' : 'Aggiungi'}
+          </Bottone>
         )
       }
       className="mb-4"
@@ -82,14 +87,13 @@ function SchedaSede({ leadId, sede }: { leadId: string; sede: SedeConPos }) {
           </p>
           {indirizzo && <p className="text-etichetta text-testo-debole">{indirizzo}</p>}
         </div>
-        <button
-          aria-label="Elimina sede"
-          className="px-1 text-danger-soft-text"
+        <BottoneIcona
+          nome="elimina"
+          etichetta="Elimina sede"
+          className="text-danger-soft-text"
           onClick={() => elimina.mutate(sede.id)}
           disabled={elimina.isPending}
-        >
-          ✕
-        </button>
+        />
       </div>
 
       {/* Principale = quella per mappa e corrispondenza; consegna POS = dove
@@ -115,16 +119,25 @@ function SchedaSede({ leadId, sede }: { leadId: string; sede: SedeConPos }) {
           />
           Consegna POS
         </label>
-        {sede.consegna_pos && <Pillola tinta="avviso">📦 Consegna qui</Pillola>}
+        {sede.consegna_pos && (
+          <Pillola tinta="avviso" icona="allegato">
+            Consegna qui
+          </Pillola>
+        )}
       </div>
 
       {/* Censimento POS della sede (§5) */}
       <div className="mt-2 border-t border-bordo pt-2">
         <div className="flex items-center justify-between">
           <span className="text-etichetta text-testo-debole">POS censiti</span>
-          <button className="text-etichetta text-info-soft-text" onClick={() => setAggiungiPos((v) => !v)}>
-            {aggiungiPos ? 'Chiudi' : '＋ POS'}
-          </button>
+          <Bottone
+            variante="fantasma"
+            misura="sm"
+            icona={aggiungiPos ? 'chiudi' : 'aggiungi'}
+            onClick={() => setAggiungiPos((v) => !v)}
+          >
+            {aggiungiPos ? 'Chiudi' : 'POS'}
+          </Bottone>
         </div>
         <ul className="mt-1 flex flex-col gap-1">
           {sede.sedi_pos.map((p) => (
@@ -164,14 +177,13 @@ function RigaPos({ leadId, pos }: { leadId: string; pos: PosConTipo }) {
           <span className="mt-0.5 block text-testo-debole">{dettagli.join(' · ')}</span>
         )}
       </span>
-      <button
-        aria-label="Elimina POS"
-        className="px-1 text-danger-soft-text"
-        onClick={() => elimina.mutate(pos.id)}
-        disabled={elimina.isPending}
-      >
-        ✕
-      </button>
+      <BottoneIcona
+          nome="elimina"
+          etichetta="Elimina POS"
+          className="text-danger-soft-text"
+          onClick={() => elimina.mutate(pos.id)}
+          disabled={elimina.isPending}
+        />
     </li>
   )
 }

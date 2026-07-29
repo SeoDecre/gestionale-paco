@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Scheda } from '@/components/ui/Scheda'
-import { Bottone } from '@/components/ui/Bottone'
+import { Bottone, BottoneIcona } from '@/components/ui/Bottone'
 import { Input } from '@/components/ui/Campo'
 import { Pillola } from '@/components/ui/Pillola'
 import { Caricamento, Errore, Vuoto } from '@/components/ui/Stato'
@@ -75,14 +75,13 @@ function RigaZona({ zona }: { zona: Zona }) {
           />
           Attivo
         </label>
-        <button
-          aria-label="Elimina zona"
-          className="px-1 text-danger-soft-text"
+        <BottoneIcona
+          nome="elimina"
+          etichetta="Elimina zona"
+          className="text-danger-soft-text"
           onClick={() => elimina.mutate(zona.id)}
           disabled={elimina.isPending}
-        >
-          ✕
-        </button>
+        />
       </div>
       {aperto && (
         <>
@@ -120,13 +119,12 @@ function ElencoCap({ zonaId }: { zonaId: string }) {
               {c.cap}
               {c.comune ? ` · ${c.comune}` : ''}
             </Pillola>
-            <button
-              aria-label="Rimuovi CAP"
+            <BottoneIcona
+              nome="chiudi"
+              etichetta="Rimuovi CAP"
               className="text-danger-soft-text"
               onClick={() => elimina.mutate(c.id)}
-            >
-              ✕
-            </button>
+            />
           </span>
         ))}
         {cap.data && cap.data.length === 0 && (
@@ -142,8 +140,8 @@ function ElencoCap({ zonaId }: { zonaId: string }) {
           onChange={(e) => setNuovoCap(e.target.value)}
         />
         <Input placeholder="Comune (opz.)" value={comune} onChange={(e) => setComune(e.target.value)} />
-        <Bottone type="submit" disabled={crea.isPending || !capOk}>
-          ＋
+        <Bottone type="submit" icona="aggiungi" disabled={crea.isPending || !capOk}>
+          Aggiungi
         </Bottone>
       </form>
       {crea.isError && <div className="mt-1"><Errore errore={crea.error} /></div>}
@@ -178,13 +176,12 @@ function ElencoComuni({ zonaId }: { zonaId: string }) {
         {comuni.data?.map((c) => (
           <span key={c.id} className="inline-flex items-center gap-1">
             <Pillola tinta="info">{c.comune}</Pillola>
-            <button
-              aria-label="Rimuovi comune"
+            <BottoneIcona
+              nome="chiudi"
+              etichetta="Rimuovi comune"
               className="text-danger-soft-text"
               onClick={() => elimina.mutate(c.id)}
-            >
-              ✕
-            </button>
+            />
           </span>
         ))}
         {comuni.data && comuni.data.length === 0 && (
@@ -197,8 +194,8 @@ function ElencoComuni({ zonaId }: { zonaId: string }) {
           value={nuovo}
           onChange={(e) => setNuovo(e.target.value)}
         />
-        <Bottone type="submit" disabled={crea.isPending || !nuovo.trim()}>
-          ＋
+        <Bottone type="submit" icona="aggiungi" disabled={crea.isPending || !nuovo.trim()}>
+          Aggiungi
         </Bottone>
       </form>
       {crea.isError && (

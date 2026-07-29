@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Bottone } from './Bottone'
+import { Input } from './Campo'
+import { Icona, Rotellina } from './Icona'
 import {
   analizzaIndirizzo,
   haQualcosa,
@@ -53,14 +55,16 @@ export function RiconosciIndirizzo({ onApplica }: { onApplica: (a: IndirizzoAnal
   return (
     <div className="mb-2 flex flex-col gap-2">
       <div className="flex gap-2">
-        <input
+        <Input
           value={testo}
           onChange={(e) => setTesto(e.target.value)}
+          aria-label="Incolla o cerca un indirizzo"
           placeholder="Incolla o cerca: Via Roma 31 - 57016 - Rosignano (LI)"
-          className="min-w-0 flex-1 rounded-card border border-bordo bg-superficie px-3 py-2.5 text-campo"
+          className="min-w-0 flex-1"
         />
         <Bottone
           variante="secondario"
+          icona="magia"
           disabled={!haQualcosa(analisi)}
           onClick={() => applica(analisi)}
         >
@@ -68,17 +72,30 @@ export function RiconosciIndirizzo({ onApplica }: { onApplica: (a: IndirizzoAnal
         </Bottone>
       </div>
 
-      {cercando && <p className="text-etichetta text-testo-debole">Ricerca…</p>}
+      {cercando && (
+        <p
+          role="status"
+          className="flex items-center gap-2 text-etichetta text-testo-debole"
+        >
+          <Rotellina misura="sm" />
+          Ricerca…
+        </p>
+      )}
 
       {suggerimenti.length > 0 && (
-        <ul className="flex flex-col gap-1 rounded-card border border-bordo bg-superficie p-1">
+        <ul className="superficie-card animate-salita flex flex-col gap-1 p-1">
           {suggerimenti.map((s, i) => (
             <li key={`${s.etichetta}-${i}`}>
               <button
                 type="button"
                 onClick={() => applica(s)}
-                className="min-h-11 w-full rounded-card px-3 text-left text-campo hover:bg-sfondo"
+                className="transizione-colore flex min-h-11 w-full items-center gap-2 rounded-card px-3 text-left text-campo hover:bg-superficie-alt"
               >
+                <Icona
+                  nome="mappa"
+                  misura="sm"
+                  className="text-testo-debole"
+                />
                 {s.etichetta || 'Indirizzo'}
               </button>
             </li>

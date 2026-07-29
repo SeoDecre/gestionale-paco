@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import { Icona } from '@/components/ui/Icona'
 import { Link } from 'react-router-dom'
-import { Bottone } from '@/components/ui/Bottone'
+import { Bottone, BottoneIcona } from '@/components/ui/Bottone'
 import { Pillola } from '@/components/ui/Pillola'
 import { Caricamento, Errore } from '@/components/ui/Stato'
 import { formattaOra } from '@/lib/format'
@@ -40,11 +41,14 @@ export function SettimanaPage() {
       <div className="mb-3 flex gap-2">
         <Link
           to="/agenda"
-          className="flex-1 rounded-card border border-bordo bg-superficie px-3 py-2 text-center text-campo text-testo-debole"
+          className="superficie-card premibile flex-1 px-3 py-2 text-center text-campo text-testo-debole hover:border-bordo-forte hover:text-testo"
         >
           Giorno
         </Link>
-        <span className="flex-1 rounded-card bg-info-soft px-3 py-2 text-center text-campo font-medium text-info-soft-text">
+        <span
+          aria-current="page"
+          className="flex-1 rounded-card border border-info-soft-border bg-info-soft px-3 py-2 text-center text-campo font-medium text-info-soft-text"
+        >
           Settimana
         </span>
       </div>
@@ -52,17 +56,26 @@ export function SettimanaPage() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-titolo font-semibold">Planning settimanale</h1>
         <div className="flex items-center gap-2">
-          <Bottone variante="secondario" onClick={() => setLunedi(spostaGiorno(lunedi, -7))}>
-            ‹
-          </Bottone>
-          <span className="whitespace-nowrap text-etichetta text-testo-debole">
-            {inizio.getDate()} {MESI[inizio.getMonth()]} – {fine.getDate()} {MESI[fine.getMonth()]}{' '}
-            {fine.getFullYear()}
+          <BottoneIcona
+            nome="precedente"
+            etichetta="Settimana precedente"
+            variante="secondario"
+            onClick={() => setLunedi(spostaGiorno(lunedi, -7))}
+          />
+          <span className="cifre whitespace-nowrap text-etichetta text-testo-debole">
+            {inizio.getDate()} {MESI[inizio.getMonth()]} – {fine.getDate()}{' '}
+            {MESI[fine.getMonth()]} {fine.getFullYear()}
           </span>
-          <Bottone variante="secondario" onClick={() => setLunedi(spostaGiorno(lunedi, 7))}>
-            ›
-          </Bottone>
-          <Bottone variante="secondario" onClick={() => setLunedi(lunediDellaSettimana())}>
+          <BottoneIcona
+            nome="successivo"
+            etichetta="Settimana successiva"
+            variante="secondario"
+            onClick={() => setLunedi(spostaGiorno(lunedi, 7))}
+          />
+          <Bottone
+            variante="secondario"
+            onClick={() => setLunedi(lunediDellaSettimana())}
+          >
             Oggi
           </Bottone>
         </div>
@@ -90,12 +103,19 @@ export function SettimanaPage() {
                   isOggi ? 'bg-info-soft' : ''
                 }`}
               >
-                <span className="text-etichetta text-testo-debole">
-                  {NOMI_GIORNO[i]} {data.getDate()} {MESI[data.getMonth()]}
+                <span
+                  className={`text-etichetta ${
+                    isOggi
+                      ? 'font-semibold text-info-soft-text'
+                      : 'text-testo-debole'
+                  }`}
+                >
+                  {NOMI_GIORNO[i]} <span className="cifre">{data.getDate()}</span>{' '}
+                  {MESI[data.getMonth()]}
                 </span>
                 <span className="flex items-center gap-2">
                   {lista.length > 0 && (
-                    <span className="text-etichetta font-medium text-testo-debole lg:hidden">
+                    <span className="cifre text-etichetta font-medium text-testo-debole lg:hidden">
                       {lista.length}
                     </span>
                   )}
@@ -104,8 +124,9 @@ export function SettimanaPage() {
                       href={percorso}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-etichetta text-info-soft-text"
+                      className="transizione-colore inline-flex items-center gap-1 text-etichetta font-medium text-info-soft-text hover:underline"
                     >
+                      <Icona nome="naviga" misura="sm" />
                       Percorso
                     </a>
                   )}
@@ -114,7 +135,9 @@ export function SettimanaPage() {
 
               <div className="flex flex-col gap-2 p-2">
                 {lista.length === 0 ? (
-                  <p className="px-1 py-2 text-etichetta text-testo-debole">—</p>
+                  <p className="px-1 py-2 text-etichetta text-testo-tenue">
+                    Libero
+                  </p>
                 ) : (
                   lista.map((a) => <CartaAppuntamento key={a.id} app={a} />)
                 )}
@@ -130,18 +153,22 @@ export function SettimanaPage() {
 function CartaAppuntamento({ app }: { app: AppuntamentoConLead }) {
   const b = app.brand ? BADGE_BRAND[app.brand] : null
   return (
-    <article className="rounded-card border border-bordo p-2">
+    <article className="transizione-colore rounded-card border border-bordo p-2 hover:border-bordo-forte hover:bg-superficie-alt">
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-campo font-semibold text-info-soft-text">
+        <span className="cifre text-campo font-semibold text-info-soft-text">
           {formattaOra(app.inizio)}
         </span>
         {b && <Pillola tinta={b.tinta}>{b.etichetta}</Pillola>}
-        {app.stato === 'fatto' && <Pillola tinta="successo">Fatto</Pillola>}
+        {app.stato === 'fatto' && (
+          <Pillola tinta="successo" icona="successo">
+            Fatto
+          </Pillola>
+        )}
       </div>
       {app.lead ? (
         <Link
           to={`/lead/${app.lead_id}`}
-          className="mt-0.5 block truncate text-campo underline"
+          className="transizione-colore mt-0.5 block truncate text-campo hover:text-info-soft-text hover:underline"
         >
           {app.lead.ragione_sociale}
         </Link>

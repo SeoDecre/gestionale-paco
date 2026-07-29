@@ -1,5 +1,6 @@
 import { Pillola } from '@/components/ui/Pillola'
 import type { Tinta } from '@/components/ui/Pillola'
+import type { NomeIcona } from '@/components/ui/Icona'
 import { useLavorazioni } from '@/features/lavorazioni/queries'
 import { useSedi } from '../queries'
 import { posDichiarati, posCensiti, statoCensimento, type StatoCensimento } from '../pos'
@@ -13,6 +14,13 @@ import { posDichiarati, posCensiti, statoCensimento, type StatoCensimento } from
 
 const TINTA: Record<StatoCensimento, Tinta> = {
   ignoto: 'neutro',
+  incompleto: 'avviso',
+  completo: 'successo',
+  oltre: 'info',
+}
+
+const ICONA: Record<StatoCensimento, NomeIcona | undefined> = {
+  ignoto: undefined,
   incompleto: 'avviso',
   completo: 'successo',
   oltre: 'info',
@@ -42,15 +50,22 @@ export function ContatorePos({
     <span className="inline-flex flex-wrap items-center gap-1.5 text-etichetta text-testo-debole">
       {stato === 'ignoto' ? (
         <>
-          <Pillola tinta="neutro">{censiti} censiti</Pillola>
+          <Pillola tinta="neutro">
+            <span className="cifre">{censiti}</span> censiti
+          </Pillola>
           <span>nessun POS dichiarato a voce</span>
         </>
       ) : (
         <>
-          <Pillola tinta={TINTA[stato]}>
-            {dichiarati} dichiarati / {censiti} censiti
+          {/* L'icona distingue "manca ancora un giro" da "torna tutto" anche
+              senza leggere il colore della pillola. */}
+          <Pillola tinta={TINTA[stato]} icona={ICONA[stato]}>
+            <span className="cifre">{dichiarati}</span> dichiarati /{' '}
+            <span className="cifre">{censiti}</span> censiti
           </Pillola>
-          {stato === 'incompleto' && <span>mancano {dichiarati! - censiti} da censire</span>}
+          {stato === 'incompleto' && (
+            <span>mancano {dichiarati! - censiti} da censire</span>
+          )}
           {stato === 'oltre' && <span>censiti più del dichiarato</span>}
         </>
       )}

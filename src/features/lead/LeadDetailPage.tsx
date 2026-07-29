@@ -1,5 +1,7 @@
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { Caricamento, Errore } from '@/components/ui/Stato'
+import { Errore, Scheletro } from '@/components/ui/Stato'
+import { Bottone } from '@/components/ui/Bottone'
+import { Icona } from '@/components/ui/Icona'
 import { useLead, useEliminaLead } from './queries'
 import { TestataLead } from './components/TestataLead'
 import { AnagraficaScheda } from './components/AnagraficaScheda'
@@ -26,11 +28,17 @@ export function LeadDetailPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Link to="/lead" className="mb-3 inline-block text-etichetta text-info-soft-text">
-        ← Tutti i lead
+      <Link
+        to="/lead"
+        className="transizione-colore mb-3 inline-flex min-h-11 items-center gap-1 text-etichetta font-medium text-info-soft-text hover:underline"
+      >
+        <Icona nome="indietro" misura="sm" />
+        Tutti i lead
       </Link>
 
-      {lead.isLoading && <Caricamento />}
+      {/* Scheletro e non rotellina: la scheda lead ha una forma fissa, quindi
+          si puo' riservare lo spazio e la pagina non salta all'arrivo. */}
+      {lead.isLoading && <Scheletro righe={8} />}
       {lead.isError && <Errore errore={lead.error} />}
 
       {lead.data && (
@@ -56,13 +64,20 @@ export function LeadDetailPage() {
           ))}
           <PannelloAllegati leadId={id} />
 
-          <button
-            onClick={onElimina}
-            disabled={elimina.isPending}
-            className="mt-2 text-etichetta text-danger-soft-text underline"
-          >
-            Elimina lead
-          </button>
+          {/* Azione distruttiva staccata dal resto e in fondo: separarla
+              spazialmente dalle azioni normali e' cio' che impedisce di
+              toccarla per sbaglio scorrendo (HIG/Material). */}
+          <div className="mt-6 border-t border-bordo pt-4">
+            <Bottone
+              variante="pericolo"
+              misura="sm"
+              icona="elimina"
+              onClick={onElimina}
+              caricamento={elimina.isPending}
+            >
+              Elimina lead
+            </Bottone>
+          </div>
         </>
       )}
     </div>
